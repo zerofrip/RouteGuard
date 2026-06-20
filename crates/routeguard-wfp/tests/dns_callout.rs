@@ -50,5 +50,6 @@ fn integration_driver_ioctl_smoke() {
         return;
     }
     let stats = mgr.get_stats().expect("IOCTL_RG_DNS_GET_STATS");
-    eprintln!("redirected_v4={}", stats.redirected_v4);
+    let redirected_v4 = stats.redirected_v4;
+    eprintln!("redirected_v4={}", redirected_v4);
 }
