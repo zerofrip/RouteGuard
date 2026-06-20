@@ -139,28 +139,35 @@ pub fn serialize_interface(conf: &ParsedConf) -> WgntResult<Vec<u8>> {
         flags |= WIREGUARD_INTERFACE_HAS_LISTEN_PORT;
     }
 
+    let mut iface = WIREGUARD_INTERFACE {
+        Flags: flags,
+        ListenPort: conf.listen_port.unwrap_or(0),
+        _padding: 0,
+        PrivateKey: conf.private_key.unwrap_or([0; WIREGUARD_KEY_LENGTH]),
+        PublicKey: [0; WIREGUARD_KEY_LENGTH],
+        PeersCount: peer_blocks.len() as u32,
+    };
+
     unsafe {
-        let iface = buf.as_mut_ptr() as *mut WIREGUARD_INTERFACE;
-        (*iface).Flags = flags;
-        (*iface).ListenPort = conf.listen_port.unwrap_or(0);
-        if let Some(pk) = conf.private_key {
-            (*iface).PrivateKey = pk;
-        }
-        (*iface).PeersCount = peer_blocks.len() as u32;
+        std::ptr::copy_nonoverlapping(
+            &iface as *const WIREGUARD_INTERFACE as *const u8,
+            buf.as_mut_ptr(),
+            std::mem::size_of::<WIREGUARD_INTERFACE>(),
+        );
 
         let mut offset = std::mem::size_of::<WIREGUARD_INTERFACE>();
         for (peer, allowed) in peer_blocks {
             std::ptr::copy_nonoverlapping(
-                &peer as *const WIREGUARD_PEER,
-                buf.as_mut_ptr().add(offset) as *mut WIREGUARD_PEER,
-                1,
+                &peer as *const WIREGUARD_PEER as *const u8,
+                buf.as_mut_ptr().add(offset),
+                std::mem::size_of::<WIREGUARD_PEER>(),
             );
             offset += std::mem::size_of::<WIREGUARD_PEER>();
             for aip in allowed {
                 std::ptr::copy_nonoverlapping(
-                    &aip as *const WIREGUARD_ALLOWED_IP,
-                    buf.as_mut_ptr().add(offset) as *mut WIREGUARD_ALLOWED_IP,
-                    1,
+                    &aip as *const WIREGUARD_ALLOWED_IP as *const u8,
+                    buf.as_mut_ptr().add(offset),
+                    std::mem::size_of::<WIREGUARD_ALLOWED_IP>(),
                 );
                 offset += std::mem::size_of::<WIREGUARD_ALLOWED_IP>();
             }
