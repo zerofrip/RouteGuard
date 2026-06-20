@@ -18,6 +18,7 @@ use routeguard_core::error::{Result, RouteGuardError};
 static NEXT_ID: AtomicU64 = AtomicU64::new(1);
 
 #[cfg(windows)]
+#[allow(dead_code)]
 struct RunningPhantun {
     child: std::process::Child,
     local: SocketAddr,
