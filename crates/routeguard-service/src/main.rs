@@ -8,6 +8,7 @@
         clippy::io_other_error
     )
 )]
+#![cfg_attr(windows, allow(unused_imports, unused_variables))]
 
 mod backend_selector;
 mod connect_session;
@@ -77,7 +78,7 @@ async fn main() -> routeguard_core::Result<()> {
 
     #[cfg(windows)]
     if !args.console {
-        return service::run_as_service(ctx).await;
+        return service::run_as_service(ctx);
     }
 
     run_console(ctx).await

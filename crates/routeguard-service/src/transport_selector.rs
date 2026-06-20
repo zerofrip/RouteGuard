@@ -287,7 +287,7 @@ impl TransportSelector {
     pub fn health(
         &self,
         choice: TransportChoice,
-        session: &TransportSession,
+        _session: &TransportSession,
     ) -> routeguard_core::transport::TransportHealth {
         // sync wrapper not available - health checked via async in handler
         match choice {

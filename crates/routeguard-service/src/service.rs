@@ -122,9 +122,9 @@ fn run_service() -> Result<()> {
     }
 
     rt.block_on(async {
-        transport_health::spawn_transport_health_monitor(ctx.clone());
-        observability::spawn_stats_publisher(ctx.clone());
-        observability::spawn_history_persist(ctx.clone());
+        crate::transport_health::spawn_transport_health_monitor(ctx.clone());
+        crate::observability::spawn_stats_publisher(ctx.clone());
+        crate::observability::spawn_history_persist(ctx.clone());
 
         let handler = ctx.clone();
         let ipc_task = tokio::spawn(async move {
