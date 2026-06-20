@@ -16,19 +16,19 @@ pub fn pipe_sddl() -> &'static str {
 
 #[cfg(windows)]
 pub mod win {
-    use std::ffi::c_void;
     use std::io;
     use std::os::windows::io::RawHandle;
     use std::ptr;
 
     use windows_sys::Win32::Foundation::{
-        CloseHandle, ConnectNamedPipe, GetLastError, LocalFree, HANDLE, INVALID_HANDLE_VALUE,
+        CloseHandle, GetLastError, LocalFree, HANDLE, INVALID_HANDLE_VALUE,
     };
     use windows_sys::Win32::Security::Authorization::{
         ConvertStringSecurityDescriptorToSecurityDescriptorW, SDDL_REVISION_1,
     };
+    use windows_sys::Win32::Storage::FileSystem::PIPE_ACCESS_DUPLEX;
     use windows_sys::Win32::System::Pipes::{
-        CreateNamedPipeW, PIPE_ACCESS_DUPLEX, PIPE_READMODE_BYTE, PIPE_TYPE_BYTE,
+        ConnectNamedPipe, CreateNamedPipeW, PIPE_READMODE_BYTE, PIPE_TYPE_BYTE,
         PIPE_UNLIMITED_INSTANCES, PIPE_WAIT,
     };
 
@@ -54,10 +54,10 @@ pub mod win {
             return Err(io::Error::last_os_error());
         }
 
-        let mut sa = windows_sys::Win32::Security::SECURITY_ATTRIBUTES {
+        let sa = windows_sys::Win32::Security::SECURITY_ATTRIBUTES {
             nLength: std::mem::size_of::<windows_sys::Win32::Security::SECURITY_ATTRIBUTES>()
                 as u32,
-            lpSecurityDescriptor: sd as *mut c_void,
+            lpSecurityDescriptor: sd,
             bInheritHandle: 0,
         };
 
@@ -70,7 +70,7 @@ pub mod win {
                 65536,
                 65536,
                 0,
-                &mut sa,
+                &sa,
             )
         };
 

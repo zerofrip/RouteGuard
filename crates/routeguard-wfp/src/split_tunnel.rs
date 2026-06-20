@@ -8,6 +8,7 @@ mod imp {
     use windows_wfp::{Action, Direction, FilterBuilder, FilterRule, FilterWeight};
 
     use crate::engine::WfpSessionInner;
+    use crate::ip_mask;
 
     const PREFIX: &str = "RouteGuard_SPLIT_";
 
@@ -56,7 +57,7 @@ mod imp {
 
         for (i, app) in policy.bypass_apps.iter().enumerate() {
             let permit = FilterRule::new(
-                &format!("{PREFIX}PERMIT_EXCL_{i}"),
+                format!("{PREFIX}PERMIT_EXCL_{i}"),
                 Direction::Outbound,
                 Action::Permit,
             )
@@ -65,7 +66,7 @@ mod imp {
             ids.push(add_filter(session, permit)?);
 
             let block_tun = FilterRule::new(
-                &format!("{PREFIX}BLOCK_TUN_EXCL_{i}"),
+                format!("{PREFIX}BLOCK_TUN_EXCL_{i}"),
                 Direction::Outbound,
                 Action::Block,
             )
@@ -76,7 +77,7 @@ mod imp {
 
         if policy.tunnel_if_index.is_some() && !policy.bypass_apps.is_empty() {
             let tun_permit = FilterRule::new(
-                &format!("{PREFIX}PERMIT_TUN"),
+                format!("{PREFIX}PERMIT_TUN"),
                 Direction::Outbound,
                 Action::Permit,
             )
@@ -86,12 +87,12 @@ mod imp {
 
         for (i, cidr) in policy.block_cidrs.iter().enumerate() {
             let rule = FilterRule::new(
-                &format!("{PREFIX}IP_BLOCK_{i}"),
+                format!("{PREFIX}IP_BLOCK_{i}"),
                 Direction::Outbound,
                 Action::Block,
             )
             .with_weight(FilterWeight::UserBlock)
-            .with_remote_ip(cidr);
+            .with_remote_ip(ip_mask::from_str(cidr)?);
             ids.push(add_filter(session, rule)?);
         }
 
@@ -106,7 +107,7 @@ mod imp {
 
         for (i, app) in policy.tunnel_apps.iter().enumerate() {
             let permit = FilterRule::new(
-                &format!("{PREFIX}PERMIT_INC_{i}"),
+                format!("{PREFIX}PERMIT_INC_{i}"),
                 Direction::Outbound,
                 Action::Permit,
             )
@@ -115,7 +116,7 @@ mod imp {
             ids.push(add_filter(session, permit)?);
 
             let block = FilterRule::new(
-                &format!("{PREFIX}BLOCK_PHYS_INC_{i}"),
+                format!("{PREFIX}BLOCK_PHYS_INC_{i}"),
                 Direction::Outbound,
                 Action::Block,
             )

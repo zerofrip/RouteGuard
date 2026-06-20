@@ -8,6 +8,7 @@ pub mod dns_callout_wfp;
 pub mod domain_redirect;
 pub mod engine;
 pub mod filters;
+pub mod ip_mask;
 pub mod network_lock;
 pub mod persistent;
 pub mod policy;

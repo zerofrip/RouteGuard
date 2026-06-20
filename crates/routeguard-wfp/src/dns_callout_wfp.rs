@@ -7,6 +7,7 @@ mod inner {
 
     use crate::dns_callout_ioctl::guids;
     use crate::engine::WfpSessionInner;
+    use crate::ip_mask;
 
     const PREFIX: &str = "RouteGuard_DNS_";
 
@@ -20,11 +21,11 @@ mod inner {
 
         // Datagram UDP/53 v4 — weighted above NL block (UserPermit tier, lower numeric = higher priority in windows-wfp)
         let udp_v4 = FilterRule::new(
-            &format!("{PREFIX}UDP53_V4"),
+            format!("{PREFIX}UDP53_V4"),
             Direction::Outbound,
             Action::Permit,
         )
-        .with_weight(FilterWeight::new(2))
+        .with_weight(FilterWeight::UserPermit)
         .with_protocol(windows_wfp::Protocol::Udp);
 
         let id = FilterBuilder::add_filter(&session.engine, &udp_v4).map_err(|e| {
@@ -35,12 +36,12 @@ mod inner {
 
         // Loopback proxy port permit (ensures redirected traffic reaches DnsProxy)
         let proxy_loopback = FilterRule::new(
-            &format!("{PREFIX}PROXY_LOOPBACK"),
+            format!("{PREFIX}PROXY_LOOPBACK"),
             Direction::Outbound,
             Action::Permit,
         )
-        .with_weight(FilterWeight::new(1))
-        .with_remote_ip("127.0.0.1")
+        .with_weight(FilterWeight::UserPermit)
+        .with_remote_ip(ip_mask::from_str("127.0.0.1")?)
         .with_protocol(windows_wfp::Protocol::Udp);
 
         let id = FilterBuilder::add_filter(&session.engine, &proxy_loopback)
@@ -50,11 +51,11 @@ mod inner {
 
         // TCP/53 v4
         let tcp_v4 = FilterRule::new(
-            &format!("{PREFIX}TCP53_V4"),
+            format!("{PREFIX}TCP53_V4"),
             Direction::Outbound,
             Action::Permit,
         )
-        .with_weight(FilterWeight::new(2))
+        .with_weight(FilterWeight::UserPermit)
         .with_protocol(windows_wfp::Protocol::Tcp);
 
         let id = FilterBuilder::add_filter(&session.engine, &tcp_v4).map_err(|e| {

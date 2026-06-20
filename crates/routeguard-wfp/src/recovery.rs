@@ -14,7 +14,7 @@ pub fn cleanup_stale() -> Result<usize> {
     }
 
     if let Ok(Some(dns_state)) = persistent::load_dns_redirect_state() {
-        if let Ok(mut session) = WfpSessionInner::open() {
+        if let Ok(session) = WfpSessionInner::open() {
             use windows_wfp::FilterBuilder;
             for id in dns_state.wfp_filter_ids {
                 let _ = FilterBuilder::delete_filter(&session.engine, id);

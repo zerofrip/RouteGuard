@@ -1,5 +1,5 @@
 #[cfg(windows)]
-use std::net::{IpAddr, SocketAddr};
+use std::net::SocketAddr;
 
 #[cfg(windows)]
 use routeguard_core::error::{Result, RouteGuardError};
@@ -12,6 +12,8 @@ use windows_wfp::{Action, Direction, FilterBuilder, FilterRule, FilterWeight};
 
 #[cfg(windows)]
 use crate::engine::WfpSessionInner;
+#[cfg(windows)]
+use crate::ip_mask;
 #[cfg(windows)]
 use crate::network_lock::NetworkLockPolicy;
 
@@ -27,7 +29,7 @@ pub fn install_network_lock(
 
     // Block all outbound by default
     let block = FilterRule::new(
-        &format!("{PREFIX}KS_BLOCK"),
+        format!("{PREFIX}KS_BLOCK"),
         Direction::Outbound,
         Action::Block,
     )
@@ -78,7 +80,7 @@ pub fn remove_filters(session: &mut WfpSessionInner, ids: &[u64]) -> Result<()> 
 #[cfg(windows)]
 pub fn apply_routing_policy(session: &mut WfpSessionInner, policy: &PolicySnapshot) -> Result<()> {
     // Remove prior routing filters tracked on session
-    let routing_ids: Vec<u64> = session.active_filters.iter().copied().collect();
+    let routing_ids: Vec<u64> = session.active_filters.to_vec();
     for id in routing_ids {
         let _ = FilterBuilder::delete_filter(&session.engine, id);
     }
@@ -86,7 +88,7 @@ pub fn apply_routing_policy(session: &mut WfpSessionInner, policy: &PolicySnapsh
 
     for (i, app) in policy.app_permits.iter().enumerate() {
         let rule = FilterRule::new(
-            &format!("{PREFIX}APP_PERMIT_{i}"),
+            format!("{PREFIX}APP_PERMIT_{i}"),
             Direction::Outbound,
             Action::Permit,
         )
@@ -99,7 +101,7 @@ pub fn apply_routing_policy(session: &mut WfpSessionInner, policy: &PolicySnapsh
 
     for (i, app) in policy.app_blocks.iter().enumerate() {
         let rule = FilterRule::new(
-            &format!("{PREFIX}APP_BLOCK_{i}"),
+            format!("{PREFIX}APP_BLOCK_{i}"),
             Direction::Outbound,
             Action::Block,
         )
@@ -121,26 +123,25 @@ pub fn apply_routing_policy(session: &mut WfpSessionInner, policy: &PolicySnapsh
 #[cfg(windows)]
 fn add_permit_ip(session: &mut WfpSessionInner, suffix: &str, cidr: &str) -> Result<u64> {
     let rule = FilterRule::new(
-        &format!("{PREFIX}KS_{suffix}"),
+        format!("{PREFIX}KS_{suffix}"),
         Direction::Outbound,
         Action::Permit,
     )
     .with_weight(FilterWeight::UserPermit)
-    .with_remote_ip(cidr);
+    .with_remote_ip(ip_mask::from_str(cidr)?);
     FilterBuilder::add_filter(&session.engine, &rule)
         .map_err(|e| RouteGuardError::NetworkLock(format!("permit {cidr}: {e}")))
 }
 
 #[cfg(windows)]
 fn add_permit_dns(session: &mut WfpSessionInner, suffix: &str, addr: SocketAddr) -> Result<u64> {
-    let ip = addr.ip().to_string();
     let rule = FilterRule::new(
-        &format!("{PREFIX}KS_{suffix}"),
+        format!("{PREFIX}KS_{suffix}"),
         Direction::Outbound,
         Action::Permit,
     )
     .with_weight(FilterWeight::UserPermit)
-    .with_remote_ip(&ip)
+    .with_remote_ip(ip_mask::from_ip(addr.ip()))
     .with_protocol(windows_wfp::Protocol::Udp);
     FilterBuilder::add_filter(&session.engine, &rule)
         .map_err(|e| RouteGuardError::NetworkLock(format!("permit dns {addr}: {e}")))
@@ -157,12 +158,12 @@ fn add_transport_permit(
         TransportProtocol::Tcp => windows_wfp::Protocol::Tcp,
     };
     let mut rule = FilterRule::new(
-        &format!("{PREFIX}KS_{suffix}"),
+        format!("{PREFIX}KS_{suffix}"),
         Direction::Outbound,
         Action::Permit,
     )
     .with_weight(FilterWeight::UserPermit)
-    .with_remote_ip(&permit.remote_ip.to_string())
+    .with_remote_ip(ip_mask::from_ip(permit.remote_ip))
     .with_protocol(proto);
     if let Some(port) = permit.remote_port {
         rule = rule.with_remote_port(port);
@@ -174,12 +175,12 @@ fn add_transport_permit(
 #[cfg(windows)]
 fn add_permit_endpoint(session: &mut WfpSessionInner, ep: SocketAddr) -> Result<u64> {
     let rule = FilterRule::new(
-        &format!("{PREFIX}KS_ALLOW_EP"),
+        format!("{PREFIX}KS_ALLOW_EP"),
         Direction::Outbound,
         Action::Permit,
     )
     .with_weight(FilterWeight::UserPermit)
-    .with_remote_ip(&ep.ip().to_string())
+    .with_remote_ip(ip_mask::from_ip(ep.ip()))
     .with_protocol(windows_wfp::Protocol::Udp);
     FilterBuilder::add_filter(&session.engine, &rule)
         .map_err(|e| RouteGuardError::NetworkLock(format!("permit endpoint {ep}: {e}")))
@@ -188,12 +189,12 @@ fn add_permit_endpoint(session: &mut WfpSessionInner, ep: SocketAddr) -> Result<
 #[cfg(windows)]
 fn add_block_cidr(session: &mut WfpSessionInner, suffix: &str, cidr: &str) -> Result<u64> {
     let rule = FilterRule::new(
-        &format!("{PREFIX}{suffix}"),
+        format!("{PREFIX}{suffix}"),
         Direction::Outbound,
         Action::Block,
     )
     .with_weight(FilterWeight::UserBlock)
-    .with_remote_ip(cidr);
+    .with_remote_ip(ip_mask::from_str(cidr)?);
     FilterBuilder::add_filter(&session.engine, &rule)
         .map_err(|e| RouteGuardError::Routing(format!("block {cidr}: {e}")))
 }

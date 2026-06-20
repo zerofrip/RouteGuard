@@ -37,7 +37,7 @@ mod driver_io {
                 ptr::null(),
                 OPEN_EXISTING,
                 0,
-                0,
+                ptr::null_mut(),
             )
         };
         if handle == INVALID_HANDLE_VALUE {
@@ -82,6 +82,7 @@ mod driver_io {
         Ok(())
     }
 
+    #[allow(dead_code)]
     pub fn get_status() -> Result<RgDnsRedirectStatus> {
         let handle = open_device()?;
         let mut status = RgDnsRedirectStatus::default();

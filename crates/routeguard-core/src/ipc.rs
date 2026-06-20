@@ -374,7 +374,7 @@ impl IpcClient {
     pub async fn call(req: IpcRequest) -> crate::Result<IpcResponse> {
         #[cfg(windows)]
         {
-            return crate::ipc::client::call(req).await;
+            crate::ipc::client::call(req).await
         }
         #[cfg(not(windows))]
         {

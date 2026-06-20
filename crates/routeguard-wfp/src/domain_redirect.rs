@@ -32,6 +32,8 @@ impl DomainDnsRedirect {
     ) -> Result<bool> {
         use windows_wfp::{Action, Direction, FilterBuilder, FilterRule, FilterWeight};
 
+        use crate::ip_mask;
+
         self.remove(session)?;
 
         let rule = FilterRule::new(
@@ -40,7 +42,7 @@ impl DomainDnsRedirect {
             Action::Permit,
         )
         .with_weight(FilterWeight::UserPermit)
-        .with_remote_ip("127.0.0.1")
+        .with_remote_ip(ip_mask::from_str("127.0.0.1")?)
         .with_protocol(windows_wfp::Protocol::Udp);
 
         match FilterBuilder::add_filter(&session.engine, &rule) {
