@@ -1,0 +1,33 @@
+[package]
+name = "routeguard-platform"
+description = "RouteGuard platform abstractions — WireGuardNT, routes, DNS, process"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+rust-version.workspace = true
+build = "build.rs"
+
+[dependencies]
+async-trait.workspace = true
+ipnet.workspace = true
+libloading = "0.8"
+routeguard-awg.workspace = true
+routeguard-core.workspace = true
+routeguard-routing.workspace = true
+serde.workspace = true
+thiserror.workspace = true
+tokio = { workspace = true, features = ["net", "io-util", "sync", "time", "macros", "rt"] }
+tracing.workspace = true
+uuid.workspace = true
+widestring = "1"
+
+[target.'cfg(windows)'.dependencies]
+windows-sys.workspace = true
+
+[build-dependencies]
+bindgen = "0.71"
+
+[dev-dependencies]
+tokio = { workspace = true, features = ["rt-multi-thread", "macros"] }

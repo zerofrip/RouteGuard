@@ -1,0 +1,58 @@
+[package]
+name = "routeguard-fuzz"
+version = "0.0.0"
+publish = false
+edition = "2021"
+
+[package.metadata]
+cargo-fuzz = true
+
+[dependencies]
+libfuzzer-sys = "0.4"
+routeguard-platform = { path = "../crates/routeguard-platform" }
+routeguard-awg = { path = "../crates/routeguard-awg" }
+routeguard-core = { path = "../crates/routeguard-core" }
+routeguard-lwo = { path = "../crates/routeguard-lwo" }
+serde_json = "1"
+
+[[bin]]
+name = "fuzz_wg_conf"
+path = "fuzz_targets/fuzz_wg_conf.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "fuzz_awg_conf"
+path = "fuzz_targets/fuzz_awg_conf.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "fuzz_lwo_conf"
+path = "fuzz_targets/fuzz_lwo_conf.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "fuzz_lwo_wire"
+path = "fuzz_targets/fuzz_lwo_wire.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "fuzz_ipc_request"
+path = "fuzz_targets/fuzz_ipc_request.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "fuzz_diagnostics_params"
+path = "fuzz_targets/fuzz_diagnostics_params.rs"
+test = false
+doc = false
+bench = false

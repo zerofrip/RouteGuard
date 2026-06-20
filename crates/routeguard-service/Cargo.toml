@@ -1,0 +1,36 @@
+[package]
+name = "routeguard-service"
+description = "RouteGuard Windows Service"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+rust-version.workspace = true
+
+[[bin]]
+name = "routeguard-service"
+path = "src/main.rs"
+
+[dependencies]
+async-trait.workspace = true
+clap.workspace = true
+routeguard-core.workspace = true
+routeguard-awg.workspace = true
+routeguard-platform.workspace = true
+routeguard-phantun.workspace = true
+routeguard-lwo.workspace = true
+routeguard-routing.workspace = true
+routeguard-wfp.workspace = true
+ipnet.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+tokio.workspace = true
+tracing.workspace = true
+tracing-subscriber.workspace = true
+uuid.workspace = true
+zip.workspace = true
+windows-service.workspace = true
+
+[target.'cfg(windows)'.dependencies]
+windows-sys.workspace = true

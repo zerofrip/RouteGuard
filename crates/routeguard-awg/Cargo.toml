@@ -1,0 +1,15 @@
+[package]
+name = "routeguard-awg"
+description = "AmneziaWG extension traits for RouteGuard (interfaces only)"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+rust-version.workspace = true
+
+[dependencies]
+async-trait.workspace = true
+routeguard-core.workspace = true
+serde.workspace = true
+thiserror.workspace = true

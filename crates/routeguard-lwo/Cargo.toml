@@ -1,0 +1,20 @@
+[package]
+name = "routeguard-lwo"
+description = "Mullvad-compatible Lightweight WireGuard Obfuscation transport for RouteGuard"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+rust-version.workspace = true
+
+[dependencies]
+async-trait.workspace = true
+base64 = "0.22"
+rand = "0.8"
+routeguard-core.workspace = true
+thiserror.workspace = true
+tokio = { workspace = true, features = ["net", "sync", "rt", "macros"] }
+tokio-util = { version = "0.7", features = ["rt"] }
+tracing.workspace = true
+x25519-dalek = { version = "2", features = ["static_secrets"] }

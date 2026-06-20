@@ -1,0 +1,68 @@
+[workspace]
+resolver = "2"
+members = [
+    "crates/routeguard-core",
+    "crates/routeguard-routing",
+    "crates/routeguard-platform",
+    "crates/routeguard-wfp",
+    "crates/routeguard-awg",
+    "crates/routeguard-phantun",
+    "crates/routeguard-lwo",
+    "crates/routeguard-service",
+    "crates/routeguard-cli",
+    "crates/routeguard-gui",
+    "fuzz",
+]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2021"
+license = "Apache-2.0"
+authors = ["RouteGuard Contributors"]
+repository = "https://github.com/RouteGuard/RouteGuard"
+rust-version = "1.75"
+
+[workspace.dependencies]
+anyhow = "1"
+async-trait = "0.1"
+bytes = "1"
+clap = { version = "4", features = ["derive"] }
+ipnet = "2"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+thiserror = "2"
+tokio = { version = "1", features = ["full"] }
+toml = "0.8"
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+zip = "2"
+uuid = { version = "1", features = ["v4", "serde"] }
+windows-wfp = "0.2"
+windows-sys = { version = "0.59", features = [
+    "Win32_Foundation",
+    "Win32_NetworkManagement_IpHelper",
+    "Win32_NetworkManagement_Ndis",
+    "Win32_Networking_WinSock",
+    "Win32_Security",
+    "Win32_System_Services",
+    "Win32_System_Threading",
+    "Win32_System_Pipes",
+    "Win32_System_IO",
+    "Win32_Security_Authorization",
+    "Win32_Security_WinTrust",
+    "Win32_Security_Cryptography",
+] }
+windows-service = "0.7"
+
+routeguard-core = { path = "crates/routeguard-core" }
+routeguard-routing = { path = "crates/routeguard-routing" }
+routeguard-platform = { path = "crates/routeguard-platform" }
+routeguard-wfp = { path = "crates/routeguard-wfp" }
+routeguard-awg = { path = "crates/routeguard-awg" }
+routeguard-phantun = { path = "crates/routeguard-phantun" }
+routeguard-lwo = { path = "crates/routeguard-lwo" }
+
+[profile.release]
+lto = true
+codegen-units = 1
+strip = true

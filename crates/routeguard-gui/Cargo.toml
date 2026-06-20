@@ -1,0 +1,16 @@
+[package]
+name = "routeguard-gui"
+description = "RouteGuard Tauri GUI stub (future)"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+rust-version.workspace = true
+
+[[bin]]
+name = "routeguard-gui"
+path = "src/main.rs"
+
+[dependencies]
+routeguard-core.workspace = true

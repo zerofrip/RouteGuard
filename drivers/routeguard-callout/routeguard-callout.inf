@@ -1,0 +1,50 @@
+;
+; routeguard-callout.sys — WFP DNS redirect callout driver
+;
+
+[Version]
+Signature   = "$WINDOWS NT$"
+Class       = System
+ClassGuid   = {4D36E97D-E325-11CE-BFC1-08002BE10318}
+Provider    = %ManufacturerName%
+DriverVer   = 06/20/2026,1.0.0.0
+CatalogFile = routeguard-callout.cat
+PnpLockdown = 1
+
+[DestinationDirs]
+DefaultDestDir = 12
+
+[SourceDisksNames]
+1 = %DiskName%,,,""
+
+[SourceDisksFiles]
+routeguard-callout.sys = 1
+
+[Manufacturer]
+%ManufacturerName% = Standard,NTamd64
+
+[Standard.NTamd64]
+%DeviceDesc% = RouteguardCallout_Install, Root\RouteGuardCallout
+
+[RouteguardCallout_Install.NT]
+CopyFiles = DriverCopyFiles
+
+[DriverCopyFiles]
+routeguard-callout.sys
+
+[RouteguardCallout_Install.NT.Services]
+AddService = RouteGuardCallout,%SPSVCINST_ASSOCSERVICE%,RouteGuardCallout_Service
+
+[RouteGuardCallout_Service]
+DisplayName    = %ServiceDesc%
+ServiceType    = 1
+StartType      = 3
+ErrorControl   = 1
+ServiceBinary  = %12%\routeguard-callout.sys
+
+[Strings]
+ManufacturerName = "RouteGuard"
+DiskName         = "RouteGuard Callout Driver"
+DeviceDesc       = "RouteGuard WFP DNS Redirect Callout"
+ServiceDesc      = "RouteGuard DNS Redirect Callout Driver"
+SPSVCINST_ASSOCSERVICE = 0x00000002

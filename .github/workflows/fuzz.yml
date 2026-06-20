@@ -1,0 +1,54 @@
+name: Fuzz (nightly)
+
+on:
+  schedule:
+    - cron: '0 3 * * *'
+  workflow_dispatch:
+  pull_request:
+    types: [labeled]
+
+jobs:
+  routeguard-fuzz:
+    if: github.event_name != 'pull_request' || github.event.label.name == 'fuzz-required'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: nightly
+          components: rustfmt
+
+      - name: Install cargo-fuzz
+        run: cargo install cargo-fuzz --locked
+
+      - name: Fuzz AWG + LWO + IPC (5 min each, Linux)
+        working-directory: fuzz
+        run: |
+          cargo +nightly fuzz run fuzz_awg_conf -- -max_total_time=120 -artifact_prefix=artifacts/
+          cargo +nightly fuzz run fuzz_lwo_wire -- -max_total_time=120 -artifact_prefix=artifacts/
+          cargo +nightly fuzz run fuzz_ipc_request -- -max_total_time=120 -artifact_prefix=artifacts/
+
+  routeguard-fuzz-windows:
+    if: github.event_name != 'pull_request' || github.event.label.name == 'fuzz-required'
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: nightly
+
+      - name: Install cargo-fuzz
+        run: cargo install cargo-fuzz --locked
+
+      - name: Fuzz WG conf (5 min)
+        working-directory: fuzz
+        run: cargo +nightly fuzz run fuzz_wg_conf -- -max_total_time=300 -artifact_prefix=artifacts/
+
+      - name: Upload crash artifacts
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: fuzz-crashes
+          path: fuzz/artifacts/
