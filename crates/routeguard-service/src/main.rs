@@ -8,7 +8,15 @@
         clippy::io_other_error
     )
 )]
-#![cfg_attr(windows, allow(unused_imports, unused_variables))]
+#![cfg_attr(
+    windows,
+    allow(
+        unused_imports,
+        unused_variables,
+        clippy::too_many_arguments,
+        clippy::io_other_error
+    )
+)]
 
 mod backend_selector;
 mod connect_session;
