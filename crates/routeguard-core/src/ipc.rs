@@ -417,9 +417,9 @@ pub mod server {
     use std::sync::Arc;
 
     use tokio::io::{AsyncReadExt, AsyncWriteExt};
-    use tokio::net::windows::named_pipe::{NamedPipeServer, ServerOptions};
+    use tokio::net::windows::named_pipe::NamedPipeServer;
 
-    use super::{IpcHandler, IpcRequest, IpcResponse};
+    use super::{IpcHandler, IpcRequest};
     use crate::pipe_security;
     use crate::RouteGuardError;
 
