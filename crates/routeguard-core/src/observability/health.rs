@@ -239,9 +239,7 @@ fn score_driver(dns: &DnsObs) -> (u8, Option<String>) {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::observability::{
-        DnsDriverObs, PeerObs, RuleCountObs, TransportRecoveryObs, TunnelBackendObs, TunnelStatsObs,
-    };
+    use crate::observability::{DnsDriverObs, TunnelBackendObs, TunnelStatsObs};
 
     fn sample_tunnel(age: u64) -> TunnelObs {
         TunnelObs {

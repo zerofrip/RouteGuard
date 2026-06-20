@@ -8,8 +8,8 @@ use routeguard_core::transport::{
     rewrite_conf_endpoint, runtime_conf_path, transport_hints_from_conf,
 };
 use routeguard_core::transport::{
-    PreparedConnect, ResolvedTransport, TransportBackend, TransportCapabilities,
-    TransportKind, TransportPreference, TransportSession, TunnelTransportConfig,
+    PreparedConnect, ResolvedTransport, TransportBackend, TransportCapabilities, TransportKind,
+    TransportPreference, TransportSession, TunnelTransportConfig,
 };
 use routeguard_lwo::LwoBackend;
 use routeguard_phantun::PhantunBackend;
@@ -90,7 +90,8 @@ impl TransportSelector {
         override_cfg: Option<&TunnelTransportConfig>,
     ) -> Result<(ResolvedTransport, TransportChoice, TunnelTransportConfig)> {
         let hints = transport_hints_from_conf(conf_text);
-        let merged = merge_transport_config(&hints, profile, override_cfg.or(Some(tunnel_transport)));
+        let merged =
+            merge_transport_config(&hints, profile, override_cfg.or(Some(tunnel_transport)));
 
         match merged.preference {
             TransportPreference::DirectUdp => {
@@ -283,7 +284,11 @@ impl TransportSelector {
         self.backend(choice).policy_endpoints(session)
     }
 
-    pub fn health(&self, choice: TransportChoice, session: &TransportSession) -> routeguard_core::transport::TransportHealth {
+    pub fn health(
+        &self,
+        choice: TransportChoice,
+        session: &TransportSession,
+    ) -> routeguard_core::transport::TransportHealth {
         // sync wrapper not available - health checked via async in handler
         match choice {
             TransportChoice::DirectUdp => routeguard_core::transport::TransportHealth::Healthy,
@@ -320,7 +325,8 @@ mod tests {
 
     #[test]
     fn auto_resolves_direct_udp_without_routeguard_section() {
-        let conf = "[Interface]\nPrivateKey = x\n\n[Peer]\nPublicKey = y\nEndpoint = 1.2.3.4:51820\n";
+        let conf =
+            "[Interface]\nPrivateKey = x\n\n[Peer]\nPublicKey = y\nEndpoint = 1.2.3.4:51820\n";
         let sel = TransportSelector::new();
         let (resolved, choice, _) = sel
             .resolve(conf, &TunnelTransportConfig::default(), None, None)

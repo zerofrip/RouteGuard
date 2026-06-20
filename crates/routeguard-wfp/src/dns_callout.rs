@@ -2,14 +2,12 @@
 
 use routeguard_core::error::{Result, RouteGuardError};
 
-use crate::dns_callout_ioctl::{
-    RgDnsRedirectConfig, RgDnsRedirectStats, RgDnsRedirectStatus,
-};
+use crate::dns_callout_ioctl::{RgDnsRedirectConfig, RgDnsRedirectStats, RgDnsRedirectStatus};
 
 #[cfg(windows)]
 use crate::dns_callout_ioctl::{
-    config_size, stats_size, status_size, RG_CALLOUT_USER_PATH,
-    IOCTL_RG_DNS_GET_STATS, IOCTL_RG_DNS_GET_STATUS, IOCTL_RG_DNS_SET_CONFIG,
+    config_size, stats_size, status_size, IOCTL_RG_DNS_GET_STATS, IOCTL_RG_DNS_GET_STATUS,
+    IOCTL_RG_DNS_SET_CONFIG, RG_CALLOUT_USER_PATH,
 };
 
 #[cfg(windows)]
@@ -77,7 +75,9 @@ mod driver_io {
         };
         unsafe { CloseHandle(handle) };
         if ok == 0 {
-            return Err(RouteGuardError::Platform("IOCTL_RG_DNS_SET_CONFIG failed".into()));
+            return Err(RouteGuardError::Platform(
+                "IOCTL_RG_DNS_SET_CONFIG failed".into(),
+            ));
         }
         Ok(())
     }
@@ -100,7 +100,9 @@ mod driver_io {
         };
         unsafe { CloseHandle(handle) };
         if ok == 0 {
-            return Err(RouteGuardError::Platform("IOCTL_RG_DNS_GET_STATUS failed".into()));
+            return Err(RouteGuardError::Platform(
+                "IOCTL_RG_DNS_GET_STATUS failed".into(),
+            ));
         }
         Ok(status)
     }
@@ -123,7 +125,9 @@ mod driver_io {
         };
         unsafe { CloseHandle(handle) };
         if ok == 0 {
-            return Err(RouteGuardError::Platform("IOCTL_RG_DNS_GET_STATS failed".into()));
+            return Err(RouteGuardError::Platform(
+                "IOCTL_RG_DNS_GET_STATS failed".into(),
+            ));
         }
         Ok(stats)
     }
@@ -139,10 +143,12 @@ mod driver_io {
         false
     }
 
+    #[allow(dead_code)]
     pub fn set_config(_config: &RgDnsRedirectConfig) -> Result<()> {
         Err(RouteGuardError::UnsupportedPlatform)
     }
 
+    #[allow(dead_code)]
     pub fn get_status() -> Result<RgDnsRedirectStatus> {
         Err(RouteGuardError::UnsupportedPlatform)
     }

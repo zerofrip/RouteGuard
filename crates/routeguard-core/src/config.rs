@@ -2,7 +2,6 @@ use std::path::PathBuf;
 
 use serde::{Deserialize, Serialize};
 
-use crate::backend::TunnelBackendPreference;
 use crate::transport::TunnelTransportConfig;
 
 /// Top-level persisted configuration.

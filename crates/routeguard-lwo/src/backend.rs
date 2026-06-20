@@ -5,9 +5,9 @@ use std::net::SocketAddr;
 use async_trait::async_trait;
 use routeguard_core::error::{Result, RouteGuardError};
 use routeguard_core::transport::{
-    PolicyTransportEndpoints, TransportBackend, TransportHealth, TransportKind,
-    TransportProbeResult, TransportSession, TransportValidateResult, TransportValidationIssue,
-    TunnelTransportConfig, resolve_lwo_remote_udp,
+    resolve_lwo_remote_udp, PolicyTransportEndpoints, TransportBackend, TransportHealth,
+    TransportKind, TransportProbeResult, TransportSession, TransportValidateResult,
+    TransportValidationIssue, TunnelTransportConfig,
 };
 
 use crate::keys::parse_lwo_keys;
@@ -100,7 +100,9 @@ impl TransportBackend for LwoBackend {
     }
 
     fn policy_endpoints(&self, session: &TransportSession) -> PolicyTransportEndpoints {
-        let remote = session.remote_transport.unwrap_or(session.original_endpoint);
+        let remote = session
+            .remote_transport
+            .unwrap_or(session.original_endpoint);
         PolicyTransportEndpoints {
             wireguard_endpoint: session.wireguard_endpoint,
             original_endpoint: session.original_endpoint,

@@ -6,12 +6,12 @@ use std::path::Path;
 use ipnet::IpNet;
 
 use super::bindings::{
-    socketaddr_to_sockaddr_inet, WIREGUARD_ALLOWED_IP, WIREGUARD_ALLOWED_IP_ADDRESS,
-    WIREGUARD_INTERFACE, WIREGUARD_INTERFACE_HAS_LISTEN_PORT, WIREGUARD_INTERFACE_HAS_PRIVATE_KEY,
-    WIREGUARD_INTERFACE_REPLACE_PEERS, WIREGUARD_KEY_LENGTH, WIREGUARD_PEER,
-    WIREGUARD_PEER_HAS_ENDPOINT, WIREGUARD_PEER_HAS_PRESHARED_KEY,
-    WIREGUARD_PEER_HAS_PUBLIC_KEY, WIREGUARD_PEER_HAS_PERSISTENT_KEEPALIVE,
-    WIREGUARD_PEER_REPLACE_ALLOWED_IPS, AF_INET, AF_INET6,
+    socketaddr_to_sockaddr_inet, AF_INET, AF_INET6, WIREGUARD_ALLOWED_IP,
+    WIREGUARD_ALLOWED_IP_ADDRESS, WIREGUARD_INTERFACE, WIREGUARD_INTERFACE_HAS_LISTEN_PORT,
+    WIREGUARD_INTERFACE_HAS_PRIVATE_KEY, WIREGUARD_INTERFACE_REPLACE_PEERS, WIREGUARD_KEY_LENGTH,
+    WIREGUARD_PEER, WIREGUARD_PEER_HAS_ENDPOINT, WIREGUARD_PEER_HAS_PERSISTENT_KEEPALIVE,
+    WIREGUARD_PEER_HAS_PRESHARED_KEY, WIREGUARD_PEER_HAS_PUBLIC_KEY,
+    WIREGUARD_PEER_REPLACE_ALLOWED_IPS,
 };
 use super::error::{WgntError, WgntResult};
 
@@ -69,9 +69,11 @@ pub fn parse_conf_text(text: &str) -> WgntResult<ParsedConf> {
                 }
                 "dns" => {
                     for dns in val.split(',') {
-                        conf.dns.push(dns.trim().parse().map_err(|e| {
-                            WgntError::Config(format!("dns: {e}"))
-                        })?);
+                        conf.dns.push(
+                            dns.trim()
+                                .parse()
+                                .map_err(|e| WgntError::Config(format!("dns: {e}")))?,
+                        );
                     }
                 }
                 "mtu" => conf.mtu = val.parse().ok(),
@@ -215,14 +217,18 @@ fn peer_to_native(peer: &ParsedPeer) -> WgntResult<(WIREGUARD_PEER, Vec<WIREGUAR
 fn ipnet_to_allowed_ip(net: &IpNet) -> WgntResult<WIREGUARD_ALLOWED_IP> {
     let (family, address) = match net {
         IpNet::V4(v4) => {
-            let mut addr = WIREGUARD_ALLOWED_IP_ADDRESS { V4: unsafe { std::mem::zeroed() } };
+            let mut addr = WIREGUARD_ALLOWED_IP_ADDRESS {
+                V4: unsafe { std::mem::zeroed() },
+            };
             unsafe {
                 addr.V4.s_addr = u32::from(*v4.addr()).to_be();
             }
             (AF_INET, addr)
         }
         IpNet::V6(v6) => {
-            let mut addr = WIREGUARD_ALLOWED_IP_ADDRESS { V6: unsafe { std::mem::zeroed() } };
+            let mut addr = WIREGUARD_ALLOWED_IP_ADDRESS {
+                V6: unsafe { std::mem::zeroed() },
+            };
             unsafe {
                 addr.V6.u.Byte = v6.addr().octets();
             }

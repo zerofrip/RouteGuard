@@ -46,8 +46,8 @@ fn verify_windows(path: &Path) -> IntegrityResult<()> {
 
     use windows_sys::Win32::Foundation::HWND;
     use windows_sys::Win32::Security::WinTrust::{
-        WinVerifyTrust, WINTRUST_ACTION_GENERIC_VERIFY_V2, WINTRUST_DATA,
-        WINTRUST_DATA_0, WINTRUST_DATA_UICONTEXT, WINTRUST_FILE_INFO,
+        WinVerifyTrust, WINTRUST_ACTION_GENERIC_VERIFY_V2, WINTRUST_DATA, WINTRUST_DATA_0,
+        WINTRUST_DATA_UICONTEXT, WINTRUST_FILE_INFO,
     };
 
     let wide: Vec<u16> = path

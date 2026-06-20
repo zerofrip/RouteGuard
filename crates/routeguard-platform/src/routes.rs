@@ -22,6 +22,7 @@ fn alloc_handle() -> RouteHandle {
 
 #[derive(Debug, Clone)]
 struct DomainRouteHandle {
+    #[allow(dead_code)]
     ip: IpAddr,
     route_handle: RouteHandle,
     expires_at: u64,
@@ -93,7 +94,8 @@ impl SessionRoutes {
         };
 
         let v4: IpNet = "0.0.0.0/0".parse().expect("valid v4");
-        self.split_handles.push(table.add_route(v4, physical_if, 1)?);
+        self.split_handles
+            .push(table.add_route(v4, physical_if, 1)?);
         self.split_handles
             .push(table.add_route(v4, tunnel_if, 100)?);
 
@@ -146,7 +148,11 @@ impl SessionRoutes {
             RouteTarget::Tunnel => tunnel_if,
             RouteTarget::Block => return Ok(()),
         };
-        let metric = if target == RouteTarget::Tunnel { 100 } else { 1 };
+        let metric = if target == RouteTarget::Tunnel {
+            100
+        } else {
+            1
+        };
         let handle = table.add_route(cidr, if_index, metric)?;
         self.domain_routes.insert(
             ip,
@@ -160,11 +166,7 @@ impl SessionRoutes {
         Ok(())
     }
 
-    pub fn remove_domain_route(
-        &mut self,
-        table: &RouteTableManager,
-        ip: IpAddr,
-    ) -> Result<()> {
+    pub fn remove_domain_route(&mut self, table: &RouteTableManager, ip: IpAddr) -> Result<()> {
         if let Some(entry) = self.domain_routes.remove(&ip) {
             table.remove_route(entry.route_handle)?;
         }
@@ -226,7 +228,11 @@ pub trait RouteTable: Send + Sync {
     fn add_route(&self, cidr: IpNet, if_index: u32, metric: u32) -> Result<RouteHandle>;
     fn set_default_via_tunnel(&self, if_index: u32, cidr: IpNet) -> Result<RouteHandle>;
     fn add_bypass_route(&self, cidr: IpNet, if_index: u32) -> Result<RouteHandle>;
-    fn add_host_route_outside_tunnel(&self, cidr: IpNet, tunnel_if_index: u32) -> Result<RouteHandle>;
+    fn add_host_route_outside_tunnel(
+        &self,
+        cidr: IpNet,
+        tunnel_if_index: u32,
+    ) -> Result<RouteHandle>;
     fn remove_route(&self, handle: RouteHandle) -> Result<()>;
     fn clear(&self) -> Result<()>;
 }

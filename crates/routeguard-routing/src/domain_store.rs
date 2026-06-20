@@ -163,11 +163,7 @@ impl DomainRouteStore {
 
         let new_ips: HashSet<IpAddr> = resolved.iter().map(|(ip, _, _)| *ip).collect();
 
-        let previous: HashSet<IpAddr> = self
-            .by_domain
-            .get(&domain)
-            .cloned()
-            .unwrap_or_default();
+        let previous: HashSet<IpAddr> = self.by_domain.get(&domain).cloned().unwrap_or_default();
 
         for ip in previous.difference(&new_ips) {
             if let Some(entry) = self.remove_ip(*ip) {
@@ -338,7 +334,10 @@ impl DomainRouteStore {
         let parsed: PersistedDomainCache =
             serde_json::from_str(json).map_err(|e| format!("parse domain cache: {e}"))?;
         if parsed.version != 1 {
-            return Err(format!("unsupported domain cache version {}", parsed.version));
+            return Err(format!(
+                "unsupported domain cache version {}",
+                parsed.version
+            ));
         }
         let mut store = Self::new(config);
         store.generation = parsed.generation;
@@ -458,8 +457,8 @@ mod tests {
             &rule("*.google.com", RouteTarget::Bypass),
         );
         let json = store.persist_json().unwrap();
-        let loaded = DomainRouteStore::load_persisted(&json, DomainRouteStoreConfig::default())
-            .unwrap();
+        let loaded =
+            DomainRouteStore::load_persisted(&json, DomainRouteStoreConfig::default()).unwrap();
         assert_eq!(loaded.lookup_ip(ip), Some(RouteTarget::Bypass));
     }
 

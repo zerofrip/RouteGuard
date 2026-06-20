@@ -18,7 +18,9 @@ pub fn default_cache_path() -> PathBuf {
     #[cfg(windows)]
     {
         if let Ok(p) = std::env::var("ProgramData") {
-            return PathBuf::from(p).join("RouteGuard").join("domain_cache.json");
+            return PathBuf::from(p)
+                .join("RouteGuard")
+                .join("domain_cache.json");
         }
     }
     PathBuf::from("domain_cache.json")
@@ -66,7 +68,12 @@ impl DomainRoutingManager {
         self.dns_redirect_active.load(Ordering::SeqCst)
     }
 
-    pub fn is_effective(&self, has_domain_rules: bool, dns_enabled: bool, tunnel_connected: bool) -> bool {
+    pub fn is_effective(
+        &self,
+        has_domain_rules: bool,
+        dns_enabled: bool,
+        tunnel_connected: bool,
+    ) -> bool {
         if !has_domain_rules || !dns_enabled {
             return false;
         }
@@ -80,7 +87,10 @@ impl DomainRoutingManager {
     fn only_bypass_targets(&self) -> bool {
         let store = self.store.lock().unwrap();
         !store.rules().is_empty()
-            && store.rules().iter().all(|r| r.target == RouteTarget::Bypass)
+            && store
+                .rules()
+                .iter()
+                .all(|r| r.target == RouteTarget::Bypass)
     }
 
     pub fn rebuild_rules(&self, rules: &[DomainRule]) {
@@ -165,11 +175,7 @@ impl DomainRoutingManager {
         let _ = self.persist();
     }
 
-    pub fn purge_expired(
-        &self,
-        session_routes: &Mutex<SessionRoutes>,
-        routes: &RouteTableManager,
-    ) {
+    pub fn purge_expired(&self, session_routes: &Mutex<SessionRoutes>, routes: &RouteTableManager) {
         let expired = {
             let mut store = self.store.lock().unwrap();
             store.purge_expired()
@@ -184,15 +190,14 @@ impl DomainRoutingManager {
             self.sync_engine();
             let _ = self.persist();
         } else {
-            let _ = session_routes.lock().unwrap().purge_expired_domain_routes(routes);
+            let _ = session_routes
+                .lock()
+                .unwrap()
+                .purge_expired_domain_routes(routes);
         }
     }
 
-    pub fn clear(
-        &self,
-        session_routes: &Mutex<SessionRoutes>,
-        routes: &RouteTableManager,
-    ) {
+    pub fn clear(&self, session_routes: &Mutex<SessionRoutes>, routes: &RouteTableManager) {
         {
             let mut store = self.store.lock().unwrap();
             store.clear();
@@ -282,13 +287,7 @@ impl DomainRoutingManager {
             return;
         }
 
-        let entries: Vec<ResolvedIpEntry> = self
-            .store
-            .lock()
-            .unwrap()
-            .entries()
-            .cloned()
-            .collect();
+        let entries: Vec<ResolvedIpEntry> = self.store.lock().unwrap().entries().cloned().collect();
 
         let mut sr = session_routes.lock().unwrap();
         for entry in entries {

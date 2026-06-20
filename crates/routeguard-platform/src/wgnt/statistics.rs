@@ -6,7 +6,7 @@ mod imp {
 
     use super::super::adapter::AdapterHandle;
     use super::super::bindings::{
-        wireguard_epoch_to_system_time, WIREGUARD_PEER, WIREGUARD_INTERFACE,
+        wireguard_epoch_to_system_time, WIREGUARD_INTERFACE, WIREGUARD_PEER,
     };
     use super::super::error::{WgntError, WgntResult};
 
@@ -73,7 +73,8 @@ mod imp {
                 }
                 let peer = &*(bytes.as_ptr().add(offset) as *const WIREGUARD_PEER);
                 let allowed_count = peer.AllowedIPsCount as usize;
-                let allowed_size = allowed_count * std::mem::size_of::<super::super::bindings::WIREGUARD_ALLOWED_IP>();
+                let allowed_size = allowed_count
+                    * std::mem::size_of::<super::super::bindings::WIREGUARD_ALLOWED_IP>();
                 offset += std::mem::size_of::<WIREGUARD_PEER>() + allowed_size;
 
                 peers.push(PeerStats {

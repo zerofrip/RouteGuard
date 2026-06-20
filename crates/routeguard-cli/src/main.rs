@@ -98,6 +98,8 @@ async fn run(cli: Cli) -> routeguard_core::Result<()> {
                 json!(ConnectParams {
                     name,
                     config_path: config,
+                    profile_name: None,
+                    transport: None,
                 }),
             )
             .await?;
@@ -137,11 +139,7 @@ async fn run(cli: Cli) -> routeguard_core::Result<()> {
                 print_result(&resp);
             }
             RulesAction::RemoveApp { path } => {
-                let resp = rpc(
-                    methods::ROUTING_REMOVE_APP,
-                    json!({ "path": path }),
-                )
-                .await?;
+                let resp = rpc(methods::ROUTING_REMOVE_APP, json!({ "path": path })).await?;
                 print_result(&resp);
             }
         },

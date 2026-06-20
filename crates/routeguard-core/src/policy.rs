@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-use crate::config::{AppConfig, RuleMode, RoutingMode};
+use crate::config::{AppConfig, RoutingMode, RuleMode};
 use crate::transport::TransportPermitRule;
 
 /// Per-application WFP filter entry.

@@ -20,11 +20,11 @@ pub use events::{EventRecord, EventStore, NetworkLockEvent, RoutingEvent, Tunnel
 pub use ipc::{IpcClient, IpcRequest, IpcResponse, IpcServer, PIPE_NAME};
 pub use observability::{
     compute_health, list_metrics, obs_now_iso, CapabilitiesObs, DiagnosticsExportParams,
-    DiagnosticsExportResult, DnsObs, HealthComponent, HealthReport, HealthStatus,
-    KNOWN_METRICS, MetricDescriptor, MetricSeries, MetricSeriesPoint, MetricsListResult, NetworkLockObs,
-    ObservabilityFeatures, ObservabilityHistoryParams, ObservabilityHistoryResult,
-    ObservabilitySnapshot, ObservabilitySnapshotParams, RoutingObs, ServiceObs, TransportObs,
-    TunnelObs, OBSERVABILITY_SCHEMA_VERSION,
+    DiagnosticsExportResult, DnsObs, HealthComponent, HealthReport, HealthStatus, MetricDescriptor,
+    MetricSeries, MetricSeriesPoint, MetricsListResult, NetworkLockObs, ObservabilityFeatures,
+    ObservabilityHistoryParams, ObservabilityHistoryResult, ObservabilitySnapshot,
+    ObservabilitySnapshotParams, RoutingObs, ServiceObs, TransportObs, TunnelObs, KNOWN_METRICS,
+    OBSERVABILITY_SCHEMA_VERSION,
 };
 pub use orchestrator::TunnelOrchestrator;
 pub use policy::{AppFilterEntry, PolicySnapshot, SessionState};

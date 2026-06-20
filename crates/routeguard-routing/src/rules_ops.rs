@@ -2,7 +2,7 @@
 
 use std::path::{Path, PathBuf};
 
-use routeguard_core::config::{AppConfig, AppRule, RuleMode, RoutingMode};
+use routeguard_core::config::{AppConfig, AppRule, RoutingMode, RuleMode};
 
 use crate::app::normalize_path;
 
@@ -48,7 +48,12 @@ pub fn add_app_rule(cfg: &mut AppConfig, req: AddAppRuleRequest) -> Result<AppRu
     let path = validate_app_path(&req.path)?;
     let normalized = normalize_path(&path);
 
-    if cfg.routing.app_rules.iter().any(|r| normalize_path(&r.path) == normalized) {
+    if cfg
+        .routing
+        .app_rules
+        .iter()
+        .any(|r| normalize_path(&r.path) == normalized)
+    {
         return Err("app rule already exists".into());
     }
 

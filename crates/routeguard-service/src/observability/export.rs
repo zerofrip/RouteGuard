@@ -4,7 +4,7 @@ use std::io::Write;
 use std::path::{Path, PathBuf};
 
 use routeguard_core::observability::{
-    DiagnosticsExportParams, DiagnosticsExportResult, ObservabilitySnapshot, obs_now_iso,
+    obs_now_iso, DiagnosticsExportParams, DiagnosticsExportResult, ObservabilitySnapshot,
 };
 use routeguard_core::Result;
 use serde_json::json;
@@ -33,11 +33,10 @@ pub async fn export_diagnostics(
         let history_dir = dir.join("history");
         std::fs::create_dir_all(&history_dir)?;
         for metric in ["tunnel.rxRateBps", "tunnel.txRateBps"] {
-            let series = ctx.observability.metrics.query(
-                metric,
-                &params.history_window,
-                "auto",
-            );
+            let series = ctx
+                .observability
+                .metrics
+                .query(metric, &params.history_window, "auto");
             write_json(
                 &history_dir.join(format!("{}.json", metric.replace('.', "-"))),
                 &json!({ "metric": metric, "series": series }),
@@ -61,7 +60,10 @@ pub async fn export_diagnostics(
         &json!({ "routing": snap_redacted.routing }),
     )?;
 
-    write_json(&dir.join("domain/status.json"), &json!({ "dns": snap_redacted.dns }))?;
+    write_json(
+        &dir.join("domain/status.json"),
+        &json!({ "dns": snap_redacted.dns }),
+    )?;
 
     if params.include_events {
         let events_dir = dir.join("events");
@@ -287,13 +289,23 @@ mod tests {
 
         let support = redact_snapshot_for_tier(&snap, "support");
         assert_eq!(
-            support.transport.as_ref().unwrap().remote_transport.as_deref(),
+            support
+                .transport
+                .as_ref()
+                .unwrap()
+                .remote_transport
+                .as_deref(),
             Some("203.0.113.1:51820")
         );
 
         let sanitized = redact_snapshot_for_tier(&snap, "sanitized");
         assert_eq!(
-            sanitized.transport.as_ref().unwrap().remote_transport.as_deref(),
+            sanitized
+                .transport
+                .as_ref()
+                .unwrap()
+                .remote_transport
+                .as_deref(),
             Some("<redacted>")
         );
     }

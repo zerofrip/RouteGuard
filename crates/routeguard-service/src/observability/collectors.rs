@@ -4,8 +4,8 @@ use routeguard_core::backend::BackendKind;
 use routeguard_core::config::RoutingMode;
 use routeguard_core::observability::{
     compute_health, obs_now_iso, CapabilitiesObs, DnsDriverObs, DnsObs, DomainRoutesObs,
-    NetworkLockObs, ObservabilitySnapshot, RuleCountObs, RoutingObs, ServiceObs,
-    TransportObs, TransportRecoveryObs, TunnelBackendObs, TunnelObs, TunnelStatsObs,
+    NetworkLockObs, ObservabilitySnapshot, RoutingObs, RuleCountObs, ServiceObs, TransportObs,
+    TransportRecoveryObs, TunnelBackendObs, TunnelObs, TunnelStatsObs,
     OBSERVABILITY_SCHEMA_VERSION,
 };
 use routeguard_core::policy::SessionState;
@@ -21,9 +21,8 @@ pub async fn collect_snapshot(
     sections: Option<&[String]>,
 ) -> ObservabilitySnapshot {
     let all = sections.is_none();
-    let want = |s: &str| {
-        all || sections.is_some_and(|v| v.iter().any(|x| x.eq_ignore_ascii_case(s)))
-    };
+    let want =
+        |s: &str| all || sections.is_some_and(|v| v.iter().any(|x| x.eq_ignore_ascii_case(s)));
 
     let session_state = ctx.orchestrator.session_state().await;
     let session_str = session_state_str(&session_state);
@@ -87,10 +86,7 @@ pub async fn collect_snapshot(
                 fallback_used: a.resolved_transport.fallback,
                 health: tr.last_transport_health.clone(),
                 local_endpoint: Some(a.transport_session.wireguard_endpoint.to_string()),
-                remote_transport: a
-                    .transport_session
-                    .remote_transport
-                    .map(|x| x.to_string()),
+                remote_transport: a.transport_session.remote_transport.map(|x| x.to_string()),
                 protocol_version: Some(a.transport_session.protocol_version),
                 wire_format: a.transport_session.wire_format.clone(),
                 recovery: TransportRecoveryObs {
@@ -119,7 +115,9 @@ pub async fn collect_snapshot(
             configured: cfg.network_lock.enabled,
             active: false,
             wfp_filters: 0,
-            violations_blocked: obs.violations_blocked.load(std::sync::atomic::Ordering::Relaxed),
+            violations_blocked: obs
+                .violations_blocked
+                .load(std::sync::atomic::Ordering::Relaxed),
             last_recovery_at: obs.nl_last_recovery_at.lock().unwrap().clone(),
         }
     };
@@ -208,7 +206,10 @@ pub async fn collect_snapshot(
     }
 }
 
-async fn build_routing(ctx: &ServiceContext, cfg: &routeguard_core::config::AppConfig) -> RoutingObs {
+async fn build_routing(
+    ctx: &ServiceContext,
+    cfg: &routeguard_core::config::AppConfig,
+) -> RoutingObs {
     let app_total = cfg.routing.app_rules.len();
     let ip_total = cfg.routing.ip_rules.len();
     let domain_total = cfg.routing.domain_rules.len();
@@ -269,7 +270,12 @@ async fn build_network_lock(
             .observability
             .violations_blocked
             .load(std::sync::atomic::Ordering::Relaxed),
-        last_recovery_at: ctx.observability.nl_last_recovery_at.lock().unwrap().clone(),
+        last_recovery_at: ctx
+            .observability
+            .nl_last_recovery_at
+            .lock()
+            .unwrap()
+            .clone(),
     }
 }
 
@@ -279,7 +285,9 @@ async fn build_dns(ctx: &ServiceContext, cfg: &routeguard_core::config::AppConfi
         let mgr = ctx.dns_callout.lock().await;
         (
             mgr.kernel_active(),
-            mgr.get_stats().ok().map(|s| serde_json::to_value(s).unwrap_or(json!({}))),
+            mgr.get_stats()
+                .ok()
+                .map(|s| serde_json::to_value(s).unwrap_or(json!({}))),
             mgr.driver_present(),
             mgr.driver_present(),
             None::<String>,
@@ -308,9 +316,7 @@ async fn build_capabilities(ctx: &ServiceContext) -> CapabilitiesObs {
     let has_domain = !cfg.routing.domain_rules.is_empty();
     let dns_on = cfg.routing.domain_dns.enabled;
     let connected = ctx.has_active_tunnel().await;
-    let effective = ctx
-        .domain_mgr
-        .is_effective(has_domain, dns_on, connected);
+    let effective = ctx.domain_mgr.is_effective(has_domain, dns_on, connected);
 
     #[cfg(windows)]
     let (awg, phantun, lwo, callout) = (

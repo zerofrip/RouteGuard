@@ -43,12 +43,10 @@ pub fn parse_lwo_keys(conf_text: &str) -> Result<LwoKeys> {
         }
     }
 
-    let private = private_key.ok_or_else(|| {
-        RouteGuardError::Config("LWO requires Interface PrivateKey".into())
-    })?;
-    let server = peer_public.ok_or_else(|| {
-        RouteGuardError::Config("LWO requires Peer PublicKey".into())
-    })?;
+    let private = private_key
+        .ok_or_else(|| RouteGuardError::Config("LWO requires Interface PrivateKey".into()))?;
+    let server =
+        peer_public.ok_or_else(|| RouteGuardError::Config("LWO requires Peer PublicKey".into()))?;
 
     let client_public = derive_public_key(&private);
 

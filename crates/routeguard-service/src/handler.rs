@@ -2,9 +2,11 @@ use std::path::PathBuf;
 use std::sync::{Arc, Mutex};
 
 use async_trait::async_trait;
-use routeguard_core::config::{AppConfig, RuleMode, DomainDnsConfig};
 use routeguard_core::backend::BackendKind;
+use routeguard_core::config::{AppConfig, DomainDnsConfig, RuleMode};
+use routeguard_core::config::{AppRule, DomainRule, IpRule, RouteTarget, RoutingMode};
 use routeguard_core::error::{Result, RouteGuardError};
+use routeguard_core::events::{EventStore, TunnelEvent};
 use routeguard_core::ipc::methods;
 use routeguard_core::ipc::{
     AddAppRuleParams, ConnectParams, EventsPollParams, ImportRulesParams, IpcHandler, IpcRequest,
@@ -16,28 +18,26 @@ use routeguard_core::observability::{
     list_metrics, DiagnosticsExportParams, MetricsListResult, ObservabilityFeatures,
     ObservabilityHistoryParams, ObservabilityHistoryResult, ObservabilitySnapshotParams,
 };
-use routeguard_core::profile::{
-    ProfileExportParams, ProfileImportParams, ProfileValidateParams,
-};
-use routeguard_core::config::{AppRule, DomainRule, IpRule, RoutingMode, RouteTarget};
-use routeguard_core::events::{EventStore, TunnelEvent};
 use routeguard_core::orchestrator::TunnelOrchestrator;
 use routeguard_core::policy::PolicySnapshot;
+use routeguard_core::profile::{ProfileExportParams, ProfileImportParams, ProfileValidateParams};
 use routeguard_platform::{
     discover_physical_if_index, AwgBackend, DnsInterceptor, DnsProxy, DnsProxyConfig,
     DnsResponseCallback, RouteTableManager, SessionRoutes, WireGuardNtBackend,
 };
 use routeguard_routing::policy::PolicyCompiler;
 use routeguard_routing::{
-    add_app_rule, default_priority_for_mode, remove_app_rule, AddAppRuleRequest, DomainRouteStoreConfig,
-    FlowContext, Protocol, RoutingEngine,
+    add_app_rule, default_priority_for_mode, remove_app_rule, AddAppRuleRequest,
+    DomainRouteStoreConfig, FlowContext, Protocol, RoutingEngine,
 };
 
 use crate::backend_selector::TunnelBackendSelector;
 use crate::connect_session::{ActiveConnectSession, ConnectSessionStore};
 use crate::domain_routing::DomainRoutingManager;
 use crate::event_bridge;
-use crate::observability::{collect_snapshot, export_diagnostics, ObservabilityRuntime, SharedObservability};
+use crate::observability::{
+    collect_snapshot, export_diagnostics, ObservabilityRuntime, SharedObservability,
+};
 use crate::profile_store;
 use crate::transport_selector::{TransportChoice, TransportSelector};
 use routeguard_core::transport::{parse_peer_endpoint, transport_summary, TransportKind};
@@ -46,7 +46,7 @@ use std::time::Instant;
 use tokio::sync::RwLock;
 
 #[cfg(windows)]
-use routeguard_wfp::{DnsCalloutManager, NetworkLockPolicy, WfpSession, probe_callout_driver};
+use routeguard_wfp::{probe_callout_driver, DnsCalloutManager, NetworkLockPolicy, WfpSession};
 #[cfg(windows)]
 use std::net::SocketAddr;
 #[cfg(windows)]
@@ -74,13 +74,13 @@ pub struct ServiceContext {
 }
 
 fn dns_config_from(cfg: &DomainDnsConfig) -> (DnsProxyConfig, DomainRouteStoreConfig) {
-    let listen: std::net::SocketAddr = cfg.listen.parse().unwrap_or_else(|_| "127.0.0.1:5353".parse().unwrap());
+    let listen: std::net::SocketAddr = cfg
+        .listen
+        .parse()
+        .unwrap_or_else(|_| "127.0.0.1:5353".parse().unwrap());
     let listen_v6 = cfg.listen_v6.parse().ok();
-    let upstream: Vec<std::net::SocketAddr> = cfg
-        .upstream
-        .iter()
-        .filter_map(|s| s.parse().ok())
-        .collect();
+    let upstream: Vec<std::net::SocketAddr> =
+        cfg.upstream.iter().filter_map(|s| s.parse().ok()).collect();
     (
         DnsProxyConfig {
             listen,
@@ -135,13 +135,7 @@ impl ServiceContext {
                 .ok()
                 .and_then(|g| g.clone())
                 .unwrap_or_default();
-            mgr_for_dns.on_dns_response(
-                domain,
-                records,
-                &sr_for_dns,
-                &routes_for_dns,
-                &policy,
-            );
+            mgr_for_dns.on_dns_response(domain, records, &sr_for_dns, &routes_for_dns, &policy);
         });
 
         let dns = Arc::new(DnsProxy::new(dns_cfg, on_dns));
@@ -260,7 +254,7 @@ impl ServiceContext {
             policy.tunnel_if_index = Some(h.if_index);
             policy.tunnel_if_luid = Some(h.if_luid);
             policy.physical_if_index = physical_if;
-        } else         if let Some(ext) = external.as_ref().filter(|c| c.connected) {
+        } else if let Some(ext) = external.as_ref().filter(|c| c.connected) {
             policy.tunnel_if_index = ext.if_index;
             policy.physical_if_index = physical_if;
         }
@@ -272,17 +266,13 @@ impl ServiceContext {
         }
 
         if let Some(active) = self.active_session.active() {
-            let endpoints = self.transport_selector.policy_endpoints(
-                active.transport_choice,
-                &active.transport_session,
-            );
+            let endpoints = self
+                .transport_selector
+                .policy_endpoints(active.transport_choice, &active.transport_session);
             policy.endpoint = Some(endpoints.wireguard_endpoint.to_string());
             policy.transport_permits = endpoints.extra_permits;
             for ip in endpoints.bypass_ips {
-                let host = format!(
-                    "{ip}/{}",
-                    if ip.is_ipv4() { 32 } else { 128 }
-                );
+                let host = format!("{ip}/{}", if ip.is_ipv4() { 32 } else { 128 });
                 if !policy.bypass_cidrs.contains(&host) {
                     policy.bypass_cidrs.push(host);
                 }
@@ -319,8 +309,11 @@ impl ServiceContext {
                 .lock()
                 .unwrap()
                 .install_split_routes(&self.routes, &policy)?;
-            self.domain_mgr
-                .reinstall_routes_from_cache(&self.session_routes, &self.routes, &policy);
+            self.domain_mgr.reinstall_routes_from_cache(
+                &self.session_routes,
+                &self.routes,
+                &policy,
+            );
         }
 
         self.apply_domain_dns_wfp(&policy).await?;
@@ -338,9 +331,8 @@ impl ServiceContext {
 
         self.domain_mgr.set_explicit_proxy(dns_cfg.explicit_proxy);
 
-        let want_redirect = dns_cfg.enabled
-            && has_rules
-            && (dns_cfg.redirect_port_53 || dns_cfg.kernel_redirect);
+        let want_redirect =
+            dns_cfg.enabled && has_rules && (dns_cfg.redirect_port_53 || dns_cfg.kernel_redirect);
 
         #[cfg(windows)]
         if want_redirect {
@@ -355,12 +347,7 @@ impl ServiceContext {
             let mut wfp = self.wfp.lock().await;
             if let Some(session) = wfp.as_mut() {
                 let inner = session.inner_mut();
-                match mgr.install(
-                    inner,
-                    port,
-                    &excluded,
-                    dns_cfg.kernel_redirect,
-                ) {
+                match mgr.install(inner, port, &excluded, dns_cfg.kernel_redirect) {
                     Ok(active) => {
                         self.domain_mgr.set_dns_redirect_active(active);
                         let state = routeguard_wfp::persistent::DnsRedirectState {
@@ -403,21 +390,13 @@ impl ServiceContext {
     #[cfg(windows)]
     async fn apply_split_wfp(&self, mut policy: PolicySnapshot) -> Result<()> {
         let cfg = self.orchestrator.get_config().await;
-        let previous_wfp = self
-            .session_routes
-            .lock()
-            .unwrap()
-            .wfp_filter_ids
-            .clone();
+        let previous_wfp = self.session_routes.lock().unwrap().wfp_filter_ids.clone();
 
         let mut wfp = self.wfp.lock().await;
         if let Some(session) = wfp.as_mut() {
             let new_ids = session.apply_split_policy(&policy, &previous_wfp)?;
             policy.wfp_filter_ids = new_ids;
-            self.session_routes
-                .lock()
-                .unwrap()
-                .wfp_filter_ids = policy.wfp_filter_ids.clone();
+            self.session_routes.lock().unwrap().wfp_filter_ids = policy.wfp_filter_ids.clone();
 
             if cfg.network_lock.enabled {
                 let ep = policy
@@ -512,9 +491,12 @@ impl IpcHandler for ServiceContext {
             methods::LOGS_TAIL => self.handle_logs_tail(req.id, req.params).await,
             methods::SERVICE_PING => self.handle_service_ping(req.id).await,
             methods::SERVICE_CAPABILITIES => self.handle_service_capabilities(req.id).await,
-            methods::ROUTING_IMPORT_RULES => self.handle_routing_import_rules(req.id, req.params).await,
+            methods::ROUTING_IMPORT_RULES => {
+                self.handle_routing_import_rules(req.id, req.params).await
+            }
             methods::ROUTING_SET_TUNNEL_CONTEXT => {
-                self.handle_routing_set_tunnel_context(req.id, req.params).await
+                self.handle_routing_set_tunnel_context(req.id, req.params)
+                    .await
             }
             methods::EVENTS_POLL => self.handle_events_poll(req.id, req.params).await,
             methods::DOMAIN_STATUS => self.handle_domain_status(req.id).await,
@@ -522,10 +504,16 @@ impl IpcHandler for ServiceContext {
             methods::TUNNEL_PROFILE_GET => self.handle_profile_get(req.id, req.params).await,
             methods::TUNNEL_PROFILE_IMPORT => self.handle_profile_import(req.id, req.params).await,
             methods::TUNNEL_PROFILE_EXPORT => self.handle_profile_export(req.id, req.params).await,
-            methods::TUNNEL_PROFILE_VALIDATE => self.handle_profile_validate(req.id, req.params).await,
+            methods::TUNNEL_PROFILE_VALIDATE => {
+                self.handle_profile_validate(req.id, req.params).await
+            }
             methods::TUNNEL_PROFILE_DELETE => self.handle_profile_delete(req.id, req.params).await,
-            methods::OBSERVABILITY_SNAPSHOT => self.handle_observability_snapshot(req.id, req.params).await,
-            methods::OBSERVABILITY_HISTORY => self.handle_observability_history(req.id, req.params).await,
+            methods::OBSERVABILITY_SNAPSHOT => {
+                self.handle_observability_snapshot(req.id, req.params).await
+            }
+            methods::OBSERVABILITY_HISTORY => {
+                self.handle_observability_history(req.id, req.params).await
+            }
             methods::SERVICE_HEALTH => self.handle_service_health(req.id).await,
             methods::METRICS_LIST => self.handle_metrics_list(req.id).await,
             methods::DIAGNOSTICS_EXPORT => self.handle_diagnostics_export(req.id, req.params).await,
@@ -602,21 +590,25 @@ impl ServiceContext {
             let requested = transport_resolved
                 .requested
                 .unwrap_or(transport_resolved.kind);
-            self.orchestrator.events().publish(TunnelEvent::TransportFallback {
-                name: tunnel_cfg.name.clone(),
-                requested,
-                actual: transport_resolved.kind,
-                reason: transport_resolved
-                    .fallback_reason
-                    .clone()
-                    .unwrap_or_else(|| "transport_unavailable".into()),
-            });
+            self.orchestrator
+                .events()
+                .publish(TunnelEvent::TransportFallback {
+                    name: tunnel_cfg.name.clone(),
+                    requested,
+                    actual: transport_resolved.kind,
+                    reason: transport_resolved
+                        .fallback_reason
+                        .clone()
+                        .unwrap_or_else(|| "transport_unavailable".into()),
+                });
         }
 
-        self.orchestrator.events().publish(TunnelEvent::TransportStarting {
-            name: tunnel_cfg.name.clone(),
-            kind: transport_resolved.kind,
-        });
+        self.orchestrator
+            .events()
+            .publish(TunnelEvent::TransportStarting {
+                name: tunnel_cfg.name.clone(),
+                kind: transport_resolved.kind,
+            });
 
         let prepared = match self
             .transport_selector
@@ -632,29 +624,33 @@ impl ServiceContext {
         {
             Ok(p) => p,
             Err(e) => {
-                self.orchestrator.events().publish(TunnelEvent::TransportFailed {
-                    name: tunnel_cfg.name.clone(),
-                    kind: transport_resolved.kind,
-                    reason: e.to_string(),
-                    recoverable: false,
-                });
+                self.orchestrator
+                    .events()
+                    .publish(TunnelEvent::TransportFailed {
+                        name: tunnel_cfg.name.clone(),
+                        kind: transport_resolved.kind,
+                        reason: e.to_string(),
+                        recoverable: false,
+                    });
                 return IpcResponse::err(id, -32000, e.to_string());
             }
         };
 
         if let Some(ref session) = prepared.transport_session {
-            self.orchestrator.events().publish(TunnelEvent::TransportConnected {
-                name: tunnel_cfg.name.clone(),
-                kind: session.kind,
-                local_endpoint: session.wireguard_endpoint.to_string(),
-                remote_transport: session.remote_transport.map(|a| a.to_string()),
-                protocol_version: if session.kind == TransportKind::Lwo {
-                    Some(session.protocol_version)
-                } else {
-                    None
-                },
-                wire_format: session.wire_format.clone(),
-            });
+            self.orchestrator
+                .events()
+                .publish(TunnelEvent::TransportConnected {
+                    name: tunnel_cfg.name.clone(),
+                    kind: session.kind,
+                    local_endpoint: session.wireguard_endpoint.to_string(),
+                    remote_transport: session.remote_transport.map(|a| a.to_string()),
+                    protocol_version: if session.kind == TransportKind::Lwo {
+                        Some(session.protocol_version)
+                    } else {
+                        None
+                    },
+                    wire_format: session.wire_format.clone(),
+                });
         }
 
         let mut connect_cfg = tunnel_cfg.clone();
@@ -671,15 +667,17 @@ impl ServiceContext {
         };
 
         if backend_resolved.fallback {
-            self.orchestrator.events().publish(TunnelEvent::BackendFallback {
-                name: tunnel_cfg.name.clone(),
-                requested: BackendKind::Awg,
-                actual: backend_resolved.kind,
-                reason: backend_resolved
-                    .fallback_reason
-                    .clone()
-                    .unwrap_or_else(|| "awg_unavailable".into()),
-            });
+            self.orchestrator
+                .events()
+                .publish(TunnelEvent::BackendFallback {
+                    name: tunnel_cfg.name.clone(),
+                    requested: BackendKind::Awg,
+                    actual: backend_resolved.kind,
+                    reason: backend_resolved
+                        .fallback_reason
+                        .clone()
+                        .unwrap_or_else(|| "awg_unavailable".into()),
+                });
         }
 
         self.orchestrator.begin_connect(&tunnel_cfg.name).await;
@@ -743,10 +741,12 @@ impl ServiceContext {
     ) {
         if let Some(ref session) = prepared.transport_session {
             let _ = self.transport_selector.down(choice, session).await;
-            self.orchestrator.events().publish(TunnelEvent::TransportDisconnected {
-                name: prepared.tunnel_config.name.clone(),
-                kind: session.kind,
-            });
+            self.orchestrator
+                .events()
+                .publish(TunnelEvent::TransportDisconnected {
+                    name: prepared.tunnel_config.name.clone(),
+                    kind: session.kind,
+                });
         }
     }
 
@@ -958,7 +958,9 @@ impl ServiceContext {
 
         let mut cfg = self.orchestrator.get_config().await;
         let previous = cfg.clone();
-        let priority = p.priority.unwrap_or_else(|| default_priority_for_mode(&cfg, mode));
+        let priority = p
+            .priority
+            .unwrap_or_else(|| default_priority_for_mode(&cfg, mode));
 
         let rule = match add_app_rule(
             &mut cfg,
@@ -1066,7 +1068,8 @@ impl ServiceContext {
         if let Err(e) = self.apply_full_policy().await {
             return IpcResponse::err(id, -32000, e.to_string());
         }
-        self.event_store.push("network_lock.enabled", json!({"active": true}));
+        self.event_store
+            .push("network_lock.enabled", json!({"active": true}));
         IpcResponse::ok(id, json!({"enabled": true}))
     }
 
@@ -1084,7 +1087,8 @@ impl ServiceContext {
             }
         }
 
-        self.event_store.push("network_lock.disabled", json!({"active": false}));
+        self.event_store
+            .push("network_lock.disabled", json!({"active": false}));
         IpcResponse::ok(id, json!({"enabled": false}))
     }
 
@@ -1151,9 +1155,9 @@ impl ServiceContext {
         let has_domain_rules = !cfg.routing.domain_rules.is_empty();
         let dns_enabled = cfg.routing.domain_dns.enabled;
         let tunnel_connected = self.has_active_tunnel().await;
-        let effective = self
-            .domain_mgr
-            .is_effective(has_domain_rules, dns_enabled, tunnel_connected);
+        let effective =
+            self.domain_mgr
+                .is_effective(has_domain_rules, dns_enabled, tunnel_connected);
 
         #[cfg(windows)]
         let callout_present = probe_callout_driver();
@@ -1391,10 +1395,7 @@ impl ServiceContext {
 
         let events = self.event_store.poll(p.since_id, p.limit.min(256));
         let latest_id = self.event_store.latest_id();
-        IpcResponse::ok(
-            id,
-            json!({"events": events, "latestId": latest_id}),
-        )
+        IpcResponse::ok(id, json!({"events": events, "latestId": latest_id}))
     }
 
     async fn handle_domain_status(&self, id: u64) -> IpcResponse {
@@ -1451,8 +1452,7 @@ impl ServiceContext {
             "domainRules": domain_rules,
             "domainRoutes": domain_routes,
         });
-        self.event_store
-            .push("routing.reloaded", payload);
+        self.event_store.push("routing.reloaded", payload);
     }
 
     async fn handle_profile_list(&self, id: u64) -> IpcResponse {
@@ -1534,7 +1534,10 @@ impl ServiceContext {
             Ok(v) => v,
             Err(e) => return IpcResponse::err(id, -32602, e.to_string()),
         };
-        let series = self.observability.metrics.query(&p.metric, &p.window, &p.resolution);
+        let series = self
+            .observability
+            .metrics
+            .query(&p.metric, &p.window, &p.resolution);
         let result = ObservabilityHistoryResult {
             metric: p.metric,
             window: p.window,
@@ -1576,10 +1579,7 @@ impl ServiceContext {
     }
 
     async fn handle_logs_tail(&self, id: u64, params: Value) -> IpcResponse {
-        let limit = params
-            .get("limit")
-            .and_then(|v| v.as_u64())
-            .unwrap_or(50) as usize;
+        let limit = params.get("limit").and_then(|v| v.as_u64()).unwrap_or(50) as usize;
         let lines = self.observability.logs.tail(limit);
         IpcResponse::ok(id, json!({ "lines": lines }))
     }

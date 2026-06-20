@@ -76,9 +76,23 @@ impl DnsInterceptor for DnsProxy {
         let max_ttl = self.config.max_ttl_secs;
 
         tokio::spawn(async move {
-            let v4 = run_dns_socket(listen, upstream.clone(), running.clone(), on_response.clone(), min_ttl, max_ttl);
+            let v4 = run_dns_socket(
+                listen,
+                upstream.clone(),
+                running.clone(),
+                on_response.clone(),
+                min_ttl,
+                max_ttl,
+            );
             let v6 = listen_v6.map(|addr| {
-                run_dns_socket(addr, upstream, running.clone(), on_response, min_ttl, max_ttl)
+                run_dns_socket(
+                    addr,
+                    upstream,
+                    running.clone(),
+                    on_response,
+                    min_ttl,
+                    max_ttl,
+                )
             });
 
             if let Err(e) = v4.await {
@@ -286,7 +300,7 @@ fn parse_dns_response(
 }
 
 fn parse_cname_chain(
-    response: &[u8],
+    _response: &[u8],
     _target: &str,
     _min_ttl: u32,
     _max_ttl: u32,

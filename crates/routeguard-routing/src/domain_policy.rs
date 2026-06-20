@@ -31,9 +31,9 @@ fn parse_host_nets(cidrs: &[String]) -> Vec<IpNet> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use routeguard_core::config::RouteTarget;
-    use crate::domain::{DomainRuleEntry};
+    use crate::domain::DomainRuleEntry;
     use crate::domain_store::DomainRouteStore;
+    use routeguard_core::config::RouteTarget;
 
     #[test]
     fn compiles_bypass_and_tunnel() {

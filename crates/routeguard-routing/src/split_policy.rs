@@ -16,7 +16,14 @@ impl AppSplitPolicyCompiler {
         tunnel_if_luid: Option<u64>,
         physical_if_index: Option<u32>,
     ) -> PolicySnapshot {
-        Self::compile_with_domain_store(cfg, engine, tunnel_if_index, tunnel_if_luid, physical_if_index, None)
+        Self::compile_with_domain_store(
+            cfg,
+            engine,
+            tunnel_if_index,
+            tunnel_if_luid,
+            physical_if_index,
+            None,
+        )
     }
 
     pub fn compile_with_domain_store(

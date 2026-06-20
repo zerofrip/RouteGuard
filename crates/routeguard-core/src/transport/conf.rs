@@ -5,8 +5,7 @@ use std::path::PathBuf;
 
 use crate::error::{Result, RouteGuardError};
 use crate::transport::{
-    LwoTransportConfig, PhantunTransportConfig, TransportKind, TransportPreference,
-    TunnelTransportConfig,
+    LwoTransportConfig, PhantunTransportConfig, TransportPreference, TunnelTransportConfig,
 };
 
 #[derive(Debug, Clone, Default)]
@@ -59,7 +58,8 @@ pub fn parse_routeguard_section(conf_text: &str) -> RouteGuardConfSection {
             "remoteudp" => section.remote_udp = Some(val.to_string()),
             "locallisten" => section.local_listen = Some(val.to_string()),
             "lwo" => {
-                section.lwo_enabled = matches!(val.to_ascii_lowercase().as_str(), "true" | "1" | "yes");
+                section.lwo_enabled =
+                    matches!(val.to_ascii_lowercase().as_str(), "true" | "1" | "yes");
             }
             "protocolversion" => section.protocol_version = val.parse().ok(),
             _ => {}
@@ -120,7 +120,9 @@ pub fn merge_transport_config(
 ) -> TunnelTransportConfig {
     let mut out = base.clone();
     if let Some(p) = profile {
-        if !matches!(p.preference, TransportPreference::Auto) || out.preference == TransportPreference::Auto {
+        if !matches!(p.preference, TransportPreference::Auto)
+            || out.preference == TransportPreference::Auto
+        {
             out.preference = p.preference;
         }
         out.require_phantun |= p.require_phantun;
@@ -277,10 +279,6 @@ pub fn resolve_lwo_remote_udp(
     Ok(peer_endpoint)
 }
 
-pub fn effective_transport_kind(resolved: TransportKind) -> TransportKind {
-    resolved
-}
-
 pub fn conf_wants_lwo(conf_text: &str) -> bool {
     let rg = parse_routeguard_section(conf_text);
     rg.lwo_enabled
@@ -299,7 +297,8 @@ mod tests {
 
     #[test]
     fn parse_peer_endpoint_from_conf() {
-        let conf = "[Interface]\nPrivateKey = x\n\n[Peer]\nPublicKey = y\nEndpoint = 1.2.3.4:51820\n";
+        let conf =
+            "[Interface]\nPrivateKey = x\n\n[Peer]\nPublicKey = y\nEndpoint = 1.2.3.4:51820\n";
         let ep = parse_peer_endpoint(conf).unwrap();
         assert_eq!(ep.to_string(), "1.2.3.4:51820");
     }

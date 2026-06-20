@@ -413,6 +413,7 @@ pub mod client {
 
 #[cfg(windows)]
 pub mod server {
+    use std::os::windows::io::{FromRawHandle, IntoRawHandle};
     use std::sync::Arc;
 
     use tokio::io::{AsyncReadExt, AsyncWriteExt};
@@ -447,8 +448,7 @@ pub mod server {
                 .map_err(|e| RouteGuardError::Ipc(format!("secure pipe connect: {e}")))?;
 
             let std_pipe = unsafe { std::os::windows::io::OwnedHandle::from_raw_handle(raw) };
-            let server =
-                unsafe { NamedPipeServer::from_raw_handle(std_pipe.into_raw_handle())? };
+            let server = unsafe { NamedPipeServer::from_raw_handle(std_pipe.into_raw_handle())? };
 
             Self::serve_one(server, self.handler.clone(), true).await
         }

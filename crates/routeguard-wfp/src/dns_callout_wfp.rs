@@ -43,9 +43,8 @@ mod inner {
         .with_remote_ip("127.0.0.1")
         .with_protocol(windows_wfp::Protocol::Udp);
 
-        let id = FilterBuilder::add_filter(&session.engine, &proxy_loopback).map_err(|e| {
-            RouteGuardError::NetworkLock(format!("dns proxy loopback permit: {e}"))
-        })?;
+        let id = FilterBuilder::add_filter(&session.engine, &proxy_loopback)
+            .map_err(|e| RouteGuardError::NetworkLock(format!("dns proxy loopback permit: {e}")))?;
         session.track_filter(id);
         ids.push(id);
 
@@ -90,10 +89,7 @@ pub use inner::{install_dns_redirect_filters, remove_dns_redirect_filters};
 use routeguard_core::error::{Result, RouteGuardError};
 
 #[cfg(not(windows))]
-pub fn install_dns_redirect_filters(
-    _session: &mut (),
-    _proxy_port: u16,
-) -> Result<Vec<u64>> {
+pub fn install_dns_redirect_filters(_session: &mut (), _proxy_port: u16) -> Result<Vec<u64>> {
     Err(RouteGuardError::UnsupportedPlatform)
 }
 

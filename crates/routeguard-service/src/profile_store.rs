@@ -91,11 +91,12 @@ pub fn validate_conf_text(
 
     let hints = transport_hints_from_conf(conf_text);
     let merged = merge_transport_config(&hints, transport, None);
-    let transport_backend: &dyn routeguard_core::transport::TransportBackend = match merged.preference {
-        TransportPreference::Phantun => &PhantunBackend::new(),
-        TransportPreference::Lwo => &LwoBackend::new(),
-        _ => &DirectUdpBackend::new(),
-    };
+    let transport_backend: &dyn routeguard_core::transport::TransportBackend =
+        match merged.preference {
+            TransportPreference::Phantun => &PhantunBackend::new(),
+            TransportPreference::Lwo => &LwoBackend::new(),
+            _ => &DirectUdpBackend::new(),
+        };
     for issue in transport_backend.validate(conf_text, &merged).issues {
         issues.push(ProfileValidationIssue {
             field: issue.field,
@@ -120,11 +121,7 @@ fn map_issue(i: ValidationIssue) -> ProfileValidationIssue {
 pub fn import_profile(params: ProfileImportParams) -> Result<TunnelProfile> {
     let hints = transport_hints_from_conf(&params.conf_text);
     let merged_transport = merge_transport_config(&hints, params.transport.as_ref(), None);
-    let validation = validate_conf_text(
-        &params.conf_text,
-        params.backend,
-        Some(&merged_transport),
-    );
+    let validation = validate_conf_text(&params.conf_text, params.backend, Some(&merged_transport));
     if !validation.valid {
         return Err(RouteGuardError::Config(format!(
             "profile validation failed: {:?}",
@@ -196,10 +193,7 @@ pub fn list_profiles() -> Result<Vec<TunnelProfile>> {
 }
 
 pub fn get_profile(name: &str) -> Result<Option<TunnelProfile>> {
-    Ok(load_index()?
-        .profiles
-        .into_iter()
-        .find(|p| p.name == name))
+    Ok(load_index()?.profiles.into_iter().find(|p| p.name == name))
 }
 
 pub fn export_profile(params: ProfileExportParams) -> Result<String> {

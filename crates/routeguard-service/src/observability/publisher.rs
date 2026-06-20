@@ -44,11 +44,13 @@ pub fn spawn_stats_publisher(ctx: Arc<ServiceContext>) {
                 for &t in HANDSHAKE_THRESHOLDS {
                     if age >= t {
                         if last.map(|l| l < t).unwrap_or(true) {
-                            ctx.orchestrator.events().publish(TunnelEvent::HandshakeThreshold {
-                                name: h.name.clone(),
-                                last_handshake_secs_ago: age,
-                                peer_count: stats.peer_count,
-                            });
+                            ctx.orchestrator
+                                .events()
+                                .publish(TunnelEvent::HandshakeThreshold {
+                                    name: h.name.clone(),
+                                    last_handshake_secs_ago: age,
+                                    peer_count: stats.peer_count,
+                                });
                             *last = Some(t);
                         }
                         break;
@@ -74,15 +76,16 @@ pub fn spawn_stats_publisher(ctx: Arc<ServiceContext>) {
                         .clone();
                     let kind = active.transport_session.kind;
                     if prev.as_ref().map(|(_, h)| h.as_str()) != Some(health_str) {
-                        ctx.observability
-                            .set_transport_health(kind, health_str);
-                        ctx.orchestrator.events().publish(TunnelEvent::TransportHealthChanged {
-                            kind,
-                            health: health_str.to_string(),
-                            local_endpoint: Some(
-                                active.transport_session.wireguard_endpoint.to_string(),
-                            ),
-                        });
+                        ctx.observability.set_transport_health(kind, health_str);
+                        ctx.orchestrator
+                            .events()
+                            .publish(TunnelEvent::TransportHealthChanged {
+                                kind,
+                                health: health_str.to_string(),
+                                local_endpoint: Some(
+                                    active.transport_session.wireguard_endpoint.to_string(),
+                                ),
+                            });
                     }
                 }
             }
@@ -90,14 +93,17 @@ pub fn spawn_stats_publisher(ctx: Arc<ServiceContext>) {
             let snap = collect_snapshot(&ctx, None).await;
             let score = snap.health.score;
             let prev_score = *ctx.observability.last_health_score.lock().unwrap();
-            let band_changed = HealthStatus::from_score(score) != HealthStatus::from_score(prev_score);
+            let band_changed =
+                HealthStatus::from_score(score) != HealthStatus::from_score(prev_score);
             let big_delta = score.abs_diff(prev_score) >= 10;
             if band_changed || big_delta {
-                ctx.orchestrator.events().publish(TunnelEvent::ObservabilityHealthChanged {
-                    score,
-                    status: format!("{:?}", snap.health.status).to_lowercase(),
-                    previous_score: prev_score,
-                });
+                ctx.orchestrator
+                    .events()
+                    .publish(TunnelEvent::ObservabilityHealthChanged {
+                        score,
+                        status: format!("{:?}", snap.health.status).to_lowercase(),
+                        previous_score: prev_score,
+                    });
                 *ctx.observability.last_health_score.lock().unwrap() = score;
             }
         }

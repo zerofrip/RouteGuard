@@ -52,7 +52,9 @@ impl DomainDnsRedirect {
                 Ok(true)
             }
             Err(e) => {
-                tracing::warn!("domain DNS WFP marker failed: {e}; treating redirect as configured");
+                tracing::warn!(
+                    "domain DNS WFP marker failed: {e}; treating redirect as configured"
+                );
                 self.active = true;
                 Ok(true)
             }

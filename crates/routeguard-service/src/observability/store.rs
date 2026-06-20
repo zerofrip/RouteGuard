@@ -4,7 +4,7 @@ use std::collections::{HashMap, VecDeque};
 use std::sync::Mutex;
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
-use routeguard_core::observability::{MetricSeriesPoint, obs_now_iso};
+use routeguard_core::observability::{obs_now_iso, MetricSeriesPoint};
 
 const RAW_CAP: usize = 3600;
 const MINUTE_CAP: usize = 1440;
@@ -48,7 +48,9 @@ impl MetricsStore {
         {
             let minute_ts = ts_secs / 60;
             let mut buckets = self.last_minute_bucket.lock().unwrap();
-            let entry = buckets.entry(metric.to_string()).or_insert((minute_ts, 0.0, 0));
+            let entry = buckets
+                .entry(metric.to_string())
+                .or_insert((minute_ts, 0.0, 0));
             if entry.0 != minute_ts {
                 let (bucket_ts, sum, count) = *entry;
                 if count > 0 {
@@ -157,7 +159,9 @@ pub fn metrics_dir() -> std::path::PathBuf {
     #[cfg(windows)]
     {
         if let Ok(p) = std::env::var("ProgramData") {
-            return std::path::PathBuf::from(p).join("RouteGuard").join("metrics");
+            return std::path::PathBuf::from(p)
+                .join("RouteGuard")
+                .join("metrics");
         }
     }
     std::path::PathBuf::from("metrics")

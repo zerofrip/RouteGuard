@@ -2,8 +2,8 @@ use async_trait::async_trait;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
-use crate::config::TunnelConfig;
 use crate::backend::BackendKind;
+use crate::config::TunnelConfig;
 use crate::error::Result;
 
 /// Opaque handle to an active tunnel session.

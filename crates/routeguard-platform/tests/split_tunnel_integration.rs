@@ -6,7 +6,7 @@
 
 #![cfg(windows)]
 
-use routeguard_core::config::{AppConfig, AppRule, RuleMode, RoutingMode};
+use routeguard_core::config::{AppConfig, AppRule, RoutingMode, RuleMode};
 use routeguard_core::policy::PolicySnapshot;
 use routeguard_routing::split_policy::AppSplitPolicyCompiler;
 use routeguard_routing::{FlowContext, Protocol, RoutingEngine};

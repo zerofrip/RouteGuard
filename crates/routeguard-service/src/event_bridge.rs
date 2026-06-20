@@ -5,10 +5,7 @@ use std::sync::Arc;
 use routeguard_core::events::{EventStore, NetworkLockEvent, TunnelEvent};
 use serde_json::json;
 
-pub fn spawn_event_bridge(
-    events: &routeguard_core::events::EventBus,
-    store: Arc<EventStore>,
-) {
+pub fn spawn_event_bridge(events: &routeguard_core::events::EventBus, store: Arc<EventStore>) {
     let mut rx = events.subscribe();
     tokio::spawn(async move {
         loop {

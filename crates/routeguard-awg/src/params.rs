@@ -42,9 +42,14 @@ impl AwgParams {
     pub fn summary(&self) -> AwgParamsSummary {
         AwgParamsSummary {
             jc: self.jc,
-            has_magic_headers: [self.h1.as_deref(), self.h2.as_deref(), self.h3.as_deref(), self.h4.as_deref()]
-                .iter()
-                .any(|h| h.is_some_and(|s| !s.is_empty())),
+            has_magic_headers: [
+                self.h1.as_deref(),
+                self.h2.as_deref(),
+                self.h3.as_deref(),
+                self.h4.as_deref(),
+            ]
+            .iter()
+            .any(|h| h.is_some_and(|s| !s.is_empty())),
         }
     }
 }

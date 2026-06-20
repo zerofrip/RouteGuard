@@ -17,9 +17,9 @@ pub mod statistics;
 pub use error::{WgntError, WgntResult};
 
 #[cfg(windows)]
-pub use bindings::WIREGUARD_ADAPTER_STATE;
-#[cfg(windows)]
 pub use adapter::{AdapterHandle, DEFAULT_POOL};
+#[cfg(windows)]
+pub use bindings::WIREGUARD_ADAPTER_STATE;
 #[cfg(windows)]
 pub use config::{parse_conf_file, parse_conf_text, serialize_interface, ParsedConf};
 #[cfg(windows)]

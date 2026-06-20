@@ -15,9 +15,7 @@ mod imp {
         for id in ids {
             let _ = FilterBuilder::delete_filter(&session.engine, *id);
         }
-        session
-            .active_filters
-            .retain(|id| !ids.contains(id));
+        session.active_filters.retain(|id| !ids.contains(id));
         Ok(())
     }
 

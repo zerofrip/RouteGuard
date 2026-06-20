@@ -36,7 +36,10 @@ pub mod win {
 
     pub fn create_secure_pipe(name: &str) -> io::Result<RawHandle> {
         let wide: Vec<u16> = name.encode_utf16().chain(std::iter::once(0)).collect();
-        let sddl: Vec<u16> = pipe_sddl().encode_utf16().chain(std::iter::once(0)).collect();
+        let sddl: Vec<u16> = pipe_sddl()
+            .encode_utf16()
+            .chain(std::iter::once(0))
+            .collect();
 
         let mut sd = ptr::null_mut();
         let ok = unsafe {
@@ -76,7 +79,9 @@ pub mod win {
         }
 
         if handle == INVALID_HANDLE_VALUE {
-            return Err(io::Error::from_raw_os_error(unsafe { GetLastError() } as i32));
+            return Err(io::Error::from_raw_os_error(
+                unsafe { GetLastError() } as i32
+            ));
         }
 
         Ok(handle as RawHandle)

@@ -34,10 +34,7 @@ mod imp {
 
         pub fn with_routes(routes: Arc<RouteTableManager>) -> Self {
             Self {
-                inner: WireGuardNtBackend::with_routes_and_dll(
-                    routes,
-                    resolve_awg_dll_path(),
-                ),
+                inner: WireGuardNtBackend::with_routes_and_dll(routes, resolve_awg_dll_path()),
             }
         }
     }
@@ -68,7 +65,11 @@ mod imp {
 
             let mut handle = self.inner.up(config).await?;
             handle.backend = BackendKind::Awg;
-            tracing::info!("AWG tunnel {} connected (if_index={})", handle.name, handle.if_index);
+            tracing::info!(
+                "AWG tunnel {} connected (if_index={})",
+                handle.name,
+                handle.if_index
+            );
             Ok(handle)
         }
 
@@ -102,6 +103,13 @@ use routeguard_core::tunnel::{
 
 #[cfg(not(windows))]
 pub struct AwgBackend;
+
+#[cfg(not(windows))]
+impl Default for AwgBackend {
+    fn default() -> Self {
+        Self
+    }
+}
 
 #[cfg(not(windows))]
 impl AwgBackend {

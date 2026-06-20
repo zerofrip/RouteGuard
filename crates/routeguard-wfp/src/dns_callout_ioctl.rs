@@ -16,9 +16,16 @@ const fn ctl_code(device_type: u32, function: u32, method: u32, access: u32) -> 
     (device_type << 16) | (access << 14) | (function << 2) | method
 }
 
-pub const IOCTL_RG_DNS_SET_CONFIG: u32 = ctl_code(RG_IOCTL_DEVICE_TYPE, 0x800, METHOD_BUFFERED, FILE_WRITE_DATA);
-pub const IOCTL_RG_DNS_GET_STATUS: u32 = ctl_code(RG_IOCTL_DEVICE_TYPE, 0x801, METHOD_BUFFERED, FILE_READ_DATA);
-pub const IOCTL_RG_DNS_GET_STATS: u32 = ctl_code(RG_IOCTL_DEVICE_TYPE, 0x802, METHOD_BUFFERED, FILE_READ_DATA);
+pub const IOCTL_RG_DNS_SET_CONFIG: u32 = ctl_code(
+    RG_IOCTL_DEVICE_TYPE,
+    0x800,
+    METHOD_BUFFERED,
+    FILE_WRITE_DATA,
+);
+pub const IOCTL_RG_DNS_GET_STATUS: u32 =
+    ctl_code(RG_IOCTL_DEVICE_TYPE, 0x801, METHOD_BUFFERED, FILE_READ_DATA);
+pub const IOCTL_RG_DNS_GET_STATS: u32 =
+    ctl_code(RG_IOCTL_DEVICE_TYPE, 0x802, METHOD_BUFFERED, FILE_READ_DATA);
 
 #[repr(C, packed(1))]
 #[derive(Debug, Clone, Copy)]
@@ -69,7 +76,11 @@ impl RgDnsRedirectConfig {
             excluded_pids: [0; RG_DNS_MAX_EXCLUDED_PIDS],
             upstream_permit_count: 0,
         };
-        for (i, pid) in excluded_pids.iter().take(RG_DNS_MAX_EXCLUDED_PIDS).enumerate() {
+        for (i, pid) in excluded_pids
+            .iter()
+            .take(RG_DNS_MAX_EXCLUDED_PIDS)
+            .enumerate()
+        {
             cfg.excluded_pids[i] = *pid;
         }
         cfg

@@ -80,10 +80,8 @@ impl ObservabilityRuntime {
         } else {
             tr.attempts = tr.attempts.saturating_add(1);
             tr.last_failure_reason = reason;
-            self.metrics.record(
-                "transport.recoveryAttempts",
-                tr.attempts as f64,
-            );
+            self.metrics
+                .record("transport.recoveryAttempts", tr.attempts as f64);
         }
     }
 }

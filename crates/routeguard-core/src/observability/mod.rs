@@ -324,24 +324,31 @@ mod tests {
                 schema_version: 3,
                 negotiated: serde_json::json!({}),
             },
-            health: compute_health(&None, &None, &RoutingObs::default(), &NetworkLockObs {
-                configured: false,
-                active: false,
-                wfp_filters: 0,
-                violations_blocked: 0,
-                last_recovery_at: None,
-            }, &DnsObs {
-                proxy_enabled: false,
-                listen: "127.0.0.1:5353".into(),
-                kernel_redirect: false,
-                redirect_active: false,
-                driver: DnsDriverObs {
-                    present: false,
-                    ready: false,
-                    version: None,
+            health: compute_health(
+                &None,
+                &None,
+                &RoutingObs::default(),
+                &NetworkLockObs {
+                    configured: false,
+                    active: false,
+                    wfp_filters: 0,
+                    violations_blocked: 0,
+                    last_recovery_at: None,
                 },
-                redirect_stats: None,
-            }, "disconnected"),
+                &DnsObs {
+                    proxy_enabled: false,
+                    listen: "127.0.0.1:5353".into(),
+                    kernel_redirect: false,
+                    redirect_active: false,
+                    driver: DnsDriverObs {
+                        present: false,
+                        ready: false,
+                        version: None,
+                    },
+                    redirect_stats: None,
+                },
+                "disconnected",
+            ),
         };
         let j = serde_json::to_value(&snap).unwrap();
         assert_eq!(j["schemaVersion"], 1);

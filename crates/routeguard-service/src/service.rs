@@ -19,8 +19,7 @@ pub fn set_service_context(ctx: Arc<ServiceContext>) {
 pub fn run_as_service(ctx: Arc<ServiceContext>) -> Result<()> {
     const SERVICE_NAME: &str = "RouteGuard";
     set_service_context(ctx);
-    windows_service::service_dispatcher::start(SERVICE_NAME, ffi_service_main)
-    .map_err(|e| {
+    windows_service::service_dispatcher::start(SERVICE_NAME, ffi_service_main).map_err(|e| {
         routeguard_core::RouteGuardError::Io(std::io::Error::new(
             std::io::ErrorKind::Other,
             format!("service dispatcher: {e}"),
@@ -155,8 +154,6 @@ fn run_service() -> Result<()> {
 }
 
 #[cfg(not(windows))]
-pub async fn run_as_service(
-    _ctx: Arc<ServiceContext>,
-) -> routeguard_core::Result<()> {
+pub async fn run_as_service(_ctx: Arc<ServiceContext>) -> routeguard_core::Result<()> {
     Err(routeguard_core::RouteGuardError::UnsupportedPlatform)
 }

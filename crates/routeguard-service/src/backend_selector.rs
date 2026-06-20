@@ -8,7 +8,7 @@ use routeguard_core::config::TunnelConfig;
 use routeguard_core::error::{Result, RouteGuardError};
 use routeguard_core::profile::ResolvedBackend;
 use routeguard_core::tunnel::{TunnelBackend, TunnelHandle, TunnelStats, TunnelStatus};
-use routeguard_platform::{AwgBackend, WireGuardNtBackend, probe_awg_library};
+use routeguard_platform::{probe_awg_library, AwgBackend, WireGuardNtBackend};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum BackendChoice {

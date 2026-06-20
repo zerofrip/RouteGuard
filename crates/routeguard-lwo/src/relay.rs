@@ -17,14 +17,18 @@ pub struct LwoRelay {
     send: JoinHandle<()>,
     recv: JoinHandle<()>,
     pub local: SocketAddr,
+    #[allow(dead_code)]
     pub remote: SocketAddr,
 }
 
 impl LwoRelay {
-    pub async fn start(keys: &LwoKeys, remote: SocketAddr, local_listen: Option<SocketAddr>) -> std::io::Result<Self> {
+    pub async fn start(
+        keys: &LwoKeys,
+        remote: SocketAddr,
+        local_listen: Option<SocketAddr>,
+    ) -> std::io::Result<Self> {
         let client_socket = Arc::new(
-            UdpSocket::bind(local_listen.unwrap_or_else(|| "127.0.0.1:0".parse().unwrap()))
-                .await?,
+            UdpSocket::bind(local_listen.unwrap_or_else(|| "127.0.0.1:0".parse().unwrap())).await?,
         );
         let local = client_socket.local_addr()?;
 
@@ -67,6 +71,7 @@ impl LwoRelay {
         !self.send.is_finished() && !self.recv.is_finished()
     }
 
+    #[allow(dead_code)]
     pub fn stop(self) {
         self.cancel.cancel();
     }

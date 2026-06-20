@@ -11,26 +11,24 @@ use routeguard_core::tunnel::{
 use crate::routes::RouteTableManager;
 
 #[cfg(windows)]
-use std::time::Duration;
+use crate::routes::SessionRoutes;
 #[cfg(windows)]
 use std::collections::HashMap;
 #[cfg(windows)]
 use std::sync::Mutex;
 #[cfg(windows)]
-use uuid::Uuid;
+use std::time::Duration;
 #[cfg(windows)]
-use crate::routes::SessionRoutes;
+use uuid::Uuid;
 
 #[cfg(windows)]
 use crate::wgnt::bindings::WIREGUARD_ADAPTER_STATE;
 #[cfg(windows)]
-use crate::wgnt::{
-    parse_conf_file, serialize_interface, AdapterHandle, WgntLibrary,
-};
+use crate::wgnt::{parse_conf_file, serialize_interface, AdapterHandle, WgntLibrary};
 #[cfg(windows)]
 use crate::wgnt::{
-    query_stats, transition_connect_start, transition_connected,
-    transition_disconnect_start, transition_disconnected, transition_error, wait_for_handshake,
+    query_stats, transition_connect_start, transition_connected, transition_disconnect_start,
+    transition_disconnected, transition_error, wait_for_handshake,
 };
 
 #[cfg(windows)]
@@ -118,8 +116,8 @@ impl WireGuardNtBackend {
         }
         let dll_path = self.resolve_dll_path();
         integrity::verify_or_warn(&dll_path);
-        let lib = WgntLibrary::load(dll_path)
-            .map_err(|e| RouteGuardError::Tunnel(e.to_string()))?;
+        let lib =
+            WgntLibrary::load(dll_path).map_err(|e| RouteGuardError::Tunnel(e.to_string()))?;
         *guard = Some(lib.clone());
         Ok(lib)
     }
@@ -257,8 +255,8 @@ impl WireGuardNtBackend {
         let library = self.library()?;
         let parsed = parse_conf_file(&config.config_path)
             .map_err(|e| RouteGuardError::Tunnel(e.to_string()))?;
-        let wire_config = serialize_interface(&parsed)
-            .map_err(|e| RouteGuardError::Tunnel(e.to_string()))?;
+        let wire_config =
+            serialize_interface(&parsed).map_err(|e| RouteGuardError::Tunnel(e.to_string()))?;
 
         let (adapter, created) = AdapterHandle::open_or_create(library.clone(), &config.name)
             .map_err(|e| RouteGuardError::Tunnel(e.to_string()))?;

@@ -14,11 +14,11 @@ mod imp {
     macro_rules! resolve_fn {
         ($lib:expr, $name:literal, $ty:ty) => {{
             type FnTy = $ty;
-            let sym: libloading::Symbol<FnTy> = $lib.get($name.as_bytes()).map_err(|_| {
-                WgntError::MissingExport {
-                    symbol: $name.into(),
-                }
-            })?;
+            let sym: libloading::Symbol<FnTy> =
+                $lib.get($name.as_bytes())
+                    .map_err(|_| WgntError::MissingExport {
+                        symbol: $name.into(),
+                    })?;
             *sym.into_raw().as_ptr()
         }};
     }
@@ -85,11 +85,7 @@ mod imp {
             unsafe {
                 Ok(Arc::new(Self {
                     path: path.clone(),
-                    create_adapter: resolve_fn!(
-                        library,
-                        "WireGuardCreateAdapter",
-                        CreateAdapterFn
-                    ),
+                    create_adapter: resolve_fn!(library, "WireGuardCreateAdapter", CreateAdapterFn),
                     open_adapter: resolve_fn!(library, "WireGuardOpenAdapter", OpenAdapterFn),
                     close_adapter: resolve_fn!(library, "WireGuardCloseAdapter", CloseAdapterFn),
                     delete_driver: resolve_fn!(library, "WireGuardDeleteDriver", DeleteDriverFn),

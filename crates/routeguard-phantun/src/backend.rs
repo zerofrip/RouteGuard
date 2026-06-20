@@ -5,10 +5,9 @@ use std::net::SocketAddr;
 use async_trait::async_trait;
 use routeguard_core::error::{Result, RouteGuardError};
 use routeguard_core::transport::{
-    PolicyTransportEndpoints, TransportBackend, TransportHealth, TransportKind,
-    TransportPermitRule, TransportProbeResult, TransportProtocol, TransportSession,
+    resolve_phantun_remote_tcp, PolicyTransportEndpoints, TransportBackend, TransportHealth,
+    TransportKind, TransportPermitRule, TransportProbeResult, TransportProtocol, TransportSession,
     TransportValidateResult, TransportValidationIssue, TunnelTransportConfig,
-    resolve_phantun_remote_tcp,
 };
 
 use crate::supervisor::{
@@ -89,7 +88,9 @@ impl TransportBackend for PhantunBackend {
     }
 
     fn policy_endpoints(&self, session: &TransportSession) -> PolicyTransportEndpoints {
-        let remote = session.remote_transport.unwrap_or(session.original_endpoint);
+        let remote = session
+            .remote_transport
+            .unwrap_or(session.original_endpoint);
         PolicyTransportEndpoints {
             wireguard_endpoint: session.wireguard_endpoint,
             original_endpoint: session.original_endpoint,
@@ -115,11 +116,8 @@ impl TransportBackend for PhantunBackend {
         }
 
         let remote = resolve_phantun_remote_tcp(cfg, peer_endpoint)?;
-        let local = pick_local_listen(
-            cfg.phantun
-                .as_ref()
-                .and_then(|p| p.local_listen.as_deref()),
-        )?;
+        let local =
+            pick_local_listen(cfg.phantun.as_ref().and_then(|p| p.local_listen.as_deref()))?;
 
         let (handle_id, bound_local) = spawn_phantun(local, remote)?;
 

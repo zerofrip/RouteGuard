@@ -1,3 +1,14 @@
+#![cfg_attr(
+    not(windows),
+    allow(
+        dead_code,
+        unused_imports,
+        unused_variables,
+        clippy::too_many_arguments,
+        clippy::io_other_error
+    )
+)]
+
 mod backend_selector;
 mod connect_session;
 mod domain_routing;

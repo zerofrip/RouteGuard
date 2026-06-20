@@ -9,7 +9,10 @@ fn main() {
         .join("../../../wireguard-nt/api/wireguard.h");
 
     if !header.exists() {
-        println!("cargo:warning=wireguard.h not found at {}, using hand-written bindings", header.display());
+        println!(
+            "cargo:warning=wireguard.h not found at {}, using hand-written bindings",
+            header.display()
+        );
         println!("cargo:rustc-cfg=wgnt_handwritten_bindings");
         return;
     }

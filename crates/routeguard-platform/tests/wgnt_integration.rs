@@ -20,8 +20,7 @@ fn dll_path() -> PathBuf {
     std::env::var("RG_WGNT_DLL")
         .map(PathBuf::from)
         .unwrap_or_else(|_| {
-            PathBuf::from(env!("CARGO_MANIFEST_DIR"))
-                .join("../../wireguard-deps/wireguard.dll")
+            PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../../wireguard-deps/wireguard.dll")
         })
 }
 
@@ -156,8 +155,6 @@ fn test_route_install_remove() {
     let mut session = SessionRoutes::new();
     let cidr: IpNet = "10.66.66.0/24".parse().unwrap();
 
-    session
-        .add_bypass(&table, cidr, 1)
-        .expect("install route");
+    session.add_bypass(&table, cidr, 1).expect("install route");
     session.clear(&table).expect("remove routes");
 }

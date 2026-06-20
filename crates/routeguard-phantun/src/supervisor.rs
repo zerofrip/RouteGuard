@@ -2,6 +2,7 @@
 
 use std::net::SocketAddr;
 use std::path::PathBuf;
+#[cfg(windows)]
 use std::sync::atomic::AtomicU64;
 
 #[cfg(windows)]
@@ -13,6 +14,7 @@ use std::sync::Mutex;
 
 use routeguard_core::error::{Result, RouteGuardError};
 
+#[cfg(windows)]
 static NEXT_ID: AtomicU64 = AtomicU64::new(1);
 
 #[cfg(windows)]
