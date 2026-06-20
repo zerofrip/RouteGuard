@@ -11,6 +11,7 @@
 #![cfg_attr(
     windows,
     allow(
+        dead_code,
         unused_imports,
         unused_variables,
         clippy::too_many_arguments,
