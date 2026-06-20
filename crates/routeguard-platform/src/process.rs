@@ -9,7 +9,7 @@ impl ProcessResolver {
     pub fn exe_path(pid: u32) -> Result<PathBuf> {
         #[cfg(windows)]
         {
-            return exe_path_windows(pid);
+            exe_path_windows(pid)
         }
         #[cfg(not(windows))]
         {

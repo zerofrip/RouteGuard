@@ -10,9 +10,7 @@ mod imp {
     use routeguard_core::backend::BackendKind;
     use routeguard_core::config::TunnelConfig;
     use routeguard_core::error::{Result, RouteGuardError};
-    use routeguard_core::tunnel::{
-        TunnelBackend, TunnelHandle, TunnelLifecycle, TunnelStats, TunnelStatus,
-    };
+    use routeguard_core::tunnel::{TunnelBackend, TunnelHandle, TunnelStats, TunnelStatus};
 
     use crate::integrity;
     use crate::routes::RouteTableManager;
@@ -21,6 +19,12 @@ mod imp {
 
     pub struct AwgBackend {
         inner: WireGuardNtBackend,
+    }
+
+    impl Default for AwgBackend {
+        fn default() -> Self {
+            Self::new()
+        }
     }
 
     impl AwgBackend {

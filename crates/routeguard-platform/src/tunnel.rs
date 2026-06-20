@@ -49,6 +49,7 @@ pub struct WireGuardNtBackend {
 struct TunnelSession {
     adapter: AdapterHandle,
     lifecycle: TunnelLifecycle,
+    #[allow(dead_code)]
     created: bool,
     session_routes: SessionRoutes,
 }
@@ -115,7 +116,7 @@ impl WireGuardNtBackend {
             return Ok(lib.clone());
         }
         let dll_path = self.resolve_dll_path();
-        integrity::verify_or_warn(&dll_path);
+        crate::integrity::verify_or_warn(&dll_path);
         let lib =
             WgntLibrary::load(dll_path).map_err(|e| RouteGuardError::Tunnel(e.to_string()))?;
         *guard = Some(lib.clone());
@@ -168,7 +169,7 @@ impl TunnelBackend for WireGuardNtBackend {
     async fn up(&self, config: &TunnelConfig) -> Result<TunnelHandle> {
         #[cfg(windows)]
         {
-            return self.up_impl(config).await;
+            self.up_impl(config).await
         }
         #[cfg(not(windows))]
         {
@@ -180,7 +181,7 @@ impl TunnelBackend for WireGuardNtBackend {
     async fn down(&self, handle: &TunnelHandle) -> Result<()> {
         #[cfg(windows)]
         {
-            return self.down_impl(handle).await;
+            self.down_impl(handle).await
         }
         #[cfg(not(windows))]
         {
@@ -196,13 +197,12 @@ impl TunnelBackend for WireGuardNtBackend {
     fn lifecycle(&self, handle: &TunnelHandle) -> TunnelLifecycle {
         #[cfg(windows)]
         {
-            return self
-                .sessions
+            self.sessions
                 .lock()
                 .unwrap()
                 .get(&handle.id)
                 .map(|s| s.lifecycle)
-                .unwrap_or(TunnelLifecycle::Disconnected);
+                .unwrap_or(TunnelLifecycle::Disconnected)
         }
         #[cfg(not(windows))]
         {
@@ -234,12 +234,12 @@ impl TunnelBackend for WireGuardNtBackend {
                         .as_secs()
                 })
                 .min();
-            return Ok(TunnelStats {
+            Ok(TunnelStats {
                 rx_bytes: rx,
                 tx_bytes: tx,
                 last_handshake_secs_ago,
                 peer_count: iface_stats.peers.len(),
-            });
+            })
         }
         #[cfg(not(windows))]
         {

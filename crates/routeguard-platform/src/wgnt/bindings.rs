@@ -1,6 +1,6 @@
 //! Raw FFI types mirroring `wireguard.h` (WireGuardNT embeddable DLL API).
 
-#![allow(non_camel_case_types, non_snake_case, dead_code)]
+#![allow(non_camel_case_types, non_snake_case, dead_code, unexpected_cfgs)]
 
 use std::ffi::c_void;
 use std::net::{Ipv4Addr, Ipv6Addr, SocketAddr};
@@ -174,7 +174,7 @@ pub fn sockaddr_to_rust(addr: &SOCKADDR_INET, family: u16) -> Option<SocketAddr>
 pub fn socketaddr_to_sockaddr_inet(addr: SocketAddr) -> (SOCKADDR_INET, u16) {
     match addr {
         SocketAddr::V4(v4) => {
-            let mut sa = SOCKADDR_IN {
+            let sa = SOCKADDR_IN {
                 sin_family: AF_INET,
                 sin_port: v4.port().to_be(),
                 sin_addr: IN_ADDR {
@@ -182,10 +182,7 @@ pub fn socketaddr_to_sockaddr_inet(addr: SocketAddr) -> (SOCKADDR_INET, u16) {
                 },
                 sin_zero: [0; 8],
             };
-            let mut out = SOCKADDR_INET { Ipv4: sa };
-            // overwrite via Ipv4 arm
-            out.Ipv4 = sa;
-            let _ = &mut sa;
+            let out = SOCKADDR_INET { Ipv4: sa };
             (out, AF_INET)
         }
         SocketAddr::V6(v6) => {

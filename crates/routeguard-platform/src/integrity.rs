@@ -47,7 +47,7 @@ fn verify_windows(path: &Path) -> IntegrityResult<()> {
     use windows_sys::Win32::Foundation::HWND;
     use windows_sys::Win32::Security::WinTrust::{
         WinVerifyTrust, WINTRUST_ACTION_GENERIC_VERIFY_V2, WINTRUST_DATA, WINTRUST_DATA_0,
-        WINTRUST_DATA_UICONTEXT, WINTRUST_FILE_INFO,
+        WINTRUST_FILE_INFO, WTD_CHOICE_FILE, WTD_REVOKE_NONE, WTD_UI_NONE,
     };
 
     let wide: Vec<u16> = path
@@ -67,10 +67,10 @@ fn verify_windows(path: &Path) -> IntegrityResult<()> {
         cbStruct: std::mem::size_of::<WINTRUST_DATA>() as u32,
         pPolicyCallbackData: std::ptr::null_mut(),
         pSIPClientData: std::ptr::null_mut(),
-        dwUIChoice: WINTRUST_DATA_UICONTEXT::WTD_UI_NONE as u32,
-        fdwRevocationChecks: 0,
-        dwUnionChoice: WINTRUST_DATA_0::WTD_CHOICE_FILE as u32,
-        Anonymous: windows_sys::Win32::Security::WinTrust::WINTRUST_DATA_0_0 {
+        dwUIChoice: WTD_UI_NONE,
+        fdwRevocationChecks: WTD_REVOKE_NONE,
+        dwUnionChoice: WTD_CHOICE_FILE,
+        Anonymous: WINTRUST_DATA_0 {
             pFile: &mut file_info,
         },
         dwStateAction: 0,

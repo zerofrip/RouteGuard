@@ -316,7 +316,7 @@ mod windows_routes {
     use windows_sys::Win32::NetworkManagement::IpHelper::{
         CreateIpForwardEntry2, DeleteIpForwardEntry2, InitializeIpForwardEntry, MIB_IPFORWARD_ROW2,
     };
-    use windows_sys::Win32::Networking::WinSock::{AF_INET, AF_INET6};
+    use windows_sys::Win32::Networking::WinSock::{AF_INET, AF_INET6, MIB_IPPROTO_NETMGMT};
 
     pub fn add_route(cidr: IpNet, if_index: u32, metric: u32) -> Result<()> {
         let mut row: MIB_IPFORWARD_ROW2 = unsafe { std::mem::zeroed() };
@@ -324,26 +324,25 @@ mod windows_routes {
 
         row.InterfaceIndex = if_index;
         row.Metric = metric;
-        row.Protocol = windows_sys::Win32::NetworkManagement::IpHelper::MIB_IPPROTO_NETMGMT as i32;
+        row.Protocol = MIB_IPPROTO_NETMGMT;
 
         match cidr {
             IpNet::V4(net) => {
-                row.DestinationPrefix.Prefix.s_addr = u32::from_be_bytes(net.addr().octets());
+                row.DestinationPrefix.Prefix.Ipv4.sin_family = AF_INET;
+                row.DestinationPrefix.Prefix.Ipv4.sin_addr.S_un.S_addr =
+                    u32::from_be_bytes(net.addr().octets());
                 row.DestinationPrefix.PrefixLength = net.prefix_len();
-                row.NextHop.s_addr = 0;
+                row.NextHop.Ipv4.sin_family = AF_INET;
+                row.NextHop.Ipv4.sin_addr.S_un.S_addr = 0;
             }
             IpNet::V6(net) => {
+                row.DestinationPrefix.Prefix.Ipv6.sin6_family = AF_INET6;
+                row.DestinationPrefix.Prefix.Ipv6.sin6_addr.u.Byte = net.addr().octets();
                 row.DestinationPrefix.PrefixLength = net.prefix_len();
-                row.DestinationPrefix.Prefix.Ipv6.sin6_addr = net.addr().octets();
             }
         }
 
-        let family = match cidr {
-            IpNet::V4(_) => AF_INET,
-            IpNet::V6(_) => AF_INET6,
-        };
-
-        let status = unsafe { CreateIpForwardEntry2(&row, family as u16) };
+        let status = unsafe { CreateIpForwardEntry2(&row) };
         if status != 0 {
             return Err(RouteGuardError::Platform(format!(
                 "CreateIpForwardEntry2 failed: {status}"
@@ -358,21 +357,19 @@ mod windows_routes {
 
         match cidr {
             IpNet::V4(net) => {
-                row.DestinationPrefix.Prefix.s_addr = u32::from_be_bytes(net.addr().octets());
+                row.DestinationPrefix.Prefix.Ipv4.sin_family = AF_INET;
+                row.DestinationPrefix.Prefix.Ipv4.sin_addr.S_un.S_addr =
+                    u32::from_be_bytes(net.addr().octets());
                 row.DestinationPrefix.PrefixLength = net.prefix_len();
             }
             IpNet::V6(net) => {
+                row.DestinationPrefix.Prefix.Ipv6.sin6_family = AF_INET6;
+                row.DestinationPrefix.Prefix.Ipv6.sin6_addr.u.Byte = net.addr().octets();
                 row.DestinationPrefix.PrefixLength = net.prefix_len();
-                row.DestinationPrefix.Prefix.Ipv6.sin6_addr = net.addr().octets();
             }
         }
 
-        let family = match cidr {
-            IpNet::V4(_) => AF_INET,
-            IpNet::V6(_) => AF_INET6,
-        };
-
-        let status = unsafe { DeleteIpForwardEntry2(&row, family as u16) };
+        let status = unsafe { DeleteIpForwardEntry2(&row) };
         if status != 0 && status != 1168 {
             return Err(RouteGuardError::Platform(format!(
                 "DeleteIpForwardEntry2 failed: {status}"

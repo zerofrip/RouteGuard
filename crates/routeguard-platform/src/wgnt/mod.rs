@@ -25,4 +25,9 @@ pub use config::{parse_conf_file, parse_conf_text, serialize_interface, ParsedCo
 #[cfg(windows)]
 pub use ffi::WgntLibrary;
 #[cfg(windows)]
+pub use state::{
+    transition_connect_start, transition_connected, transition_disconnect_start,
+    transition_disconnected, transition_error,
+};
+#[cfg(windows)]
 pub use statistics::{query_stats, wait_for_handshake, InterfaceStats, PeerStats};

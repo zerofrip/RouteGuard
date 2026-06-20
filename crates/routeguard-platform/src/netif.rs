@@ -6,7 +6,7 @@ use routeguard_core::error::{Result, RouteGuardError};
 pub fn discover_physical_if_index(exclude_if_index: u32) -> Result<u32> {
     #[cfg(windows)]
     {
-        return discover_physical_if_index_impl(exclude_if_index);
+        discover_physical_if_index_impl(exclude_if_index)
     }
     #[cfg(not(windows))]
     {
@@ -20,7 +20,7 @@ fn discover_physical_if_index_impl(exclude_if_index: u32) -> Result<u32> {
     use std::net::Ipv4Addr;
 
     use windows_sys::Win32::NetworkManagement::IpHelper::{
-        GetBestRoute2, InitializeIpForwardEntry, MIB_IPFORWARD_ROW2, MIB_IPPROTO_NETMGMT,
+        GetBestRoute2, InitializeIpForwardEntry, MIB_IPFORWARD_ROW2,
     };
     use windows_sys::Win32::Networking::WinSock::{AF_INET, SOCKADDR_INET};
 
@@ -29,10 +29,9 @@ fn discover_physical_if_index_impl(exclude_if_index: u32) -> Result<u32> {
     unsafe { InitializeIpForwardEntry(&mut row) };
 
     let mut best: SOCKADDR_INET = unsafe { std::mem::zeroed() };
-    best.Ipv4.sin_family = AF_INET as u16;
-    best.Ipv4.sin_addr.s_addr = u32::from_ne_bytes(dest.octets());
+    best.Ipv4.sin_family = AF_INET;
+    best.Ipv4.sin_addr.S_un.S_addr = u32::from_ne_bytes(dest.octets());
 
-    let mut if_index = 0u32;
     let status = unsafe {
         GetBestRoute2(
             std::ptr::null(),
@@ -42,7 +41,6 @@ fn discover_physical_if_index_impl(exclude_if_index: u32) -> Result<u32> {
             0,
             &mut row,
             &mut best,
-            &mut if_index,
         )
     };
 
@@ -52,6 +50,7 @@ fn discover_physical_if_index_impl(exclude_if_index: u32) -> Result<u32> {
         )));
     }
 
+    let mut if_index = row.InterfaceIndex;
     if if_index == 0 || if_index == exclude_if_index {
         // Fallback: enumerate adapters and pick first up non-loopback != tunnel
         if_index = enumerate_fallback(exclude_if_index)?;
@@ -66,6 +65,7 @@ fn enumerate_fallback(exclude_if_index: u32) -> Result<u32> {
         GetAdaptersAddresses, GAA_FLAG_SKIP_ANYCAST, GAA_FLAG_SKIP_DNS_SERVER,
         GAA_FLAG_SKIP_MULTICAST, IP_ADAPTER_ADDRESSES_LH,
     };
+    use windows_sys::Win32::NetworkManagement::Ndis::IfOperStatusUp;
     use windows_sys::Win32::Networking::WinSock::AF_UNSPEC;
 
     let mut buf_len = 0u32;
@@ -103,8 +103,8 @@ fn enumerate_fallback(exclude_if_index: u32) -> Result<u32> {
     let mut current = buffer.as_ptr() as *const IP_ADAPTER_ADDRESSES_LH;
     while !current.is_null() {
         let adapter = unsafe { &*current };
-        let idx = adapter.IfIndex;
-        if idx != 0 && idx != exclude_if_index && adapter.OperStatus == 1 {
+        let idx = unsafe { adapter.Anonymous1.Anonymous.IfIndex };
+        if idx != 0 && idx != exclude_if_index && adapter.OperStatus == IfOperStatusUp {
             return Ok(idx);
         }
         current = adapter.Next;
@@ -117,11 +117,9 @@ fn enumerate_fallback(exclude_if_index: u32) -> Result<u32> {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
-
     #[test]
     fn stub_on_non_windows() {
         #[cfg(not(windows))]
-        assert!(discover_physical_if_index(1).is_err());
+        assert!(super::discover_physical_if_index(1).is_err());
     }
 }

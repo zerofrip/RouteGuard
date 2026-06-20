@@ -29,7 +29,7 @@ mod imp {
                     },
                     false,
                 )),
-                Err(WgntError::Api { code, .. }) if code == 2 => {
+                Err(WgntError::Api { code: 2, .. }) => {
                     // ERROR_FILE_NOT_FOUND
                     let handle = library.create_adapter(name, DEFAULT_POOL)?;
                     Ok((

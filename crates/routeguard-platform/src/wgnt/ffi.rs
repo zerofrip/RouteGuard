@@ -2,11 +2,13 @@
 
 #[cfg(windows)]
 mod imp {
+    #![allow(clippy::not_unsafe_ptr_arg_deref)]
+
     use std::path::{Path, PathBuf};
     use std::sync::Arc;
 
     use libloading::Library;
-    use widestring::U16CStr;
+    use widestring::U16CString;
 
     use super::super::bindings::*;
     use super::super::error::{WgntError, WgntResult};
@@ -19,7 +21,7 @@ mod imp {
                     .map_err(|_| WgntError::MissingExport {
                         symbol: $name.into(),
                     })?;
-            *sym.into_raw().as_ptr()
+            *sym
         }};
     }
 
@@ -153,9 +155,9 @@ mod imp {
             name: &str,
             tunnel_type: &str,
         ) -> WgntResult<WIREGUARD_ADAPTER_HANDLE> {
-            let name = U16CStr::from_str(name).map_err(|e| WgntError::Config(e.to_string()))?;
+            let name = U16CString::from_str(name).map_err(|e| WgntError::Config(e.to_string()))?;
             let tunnel_type =
-                U16CStr::from_str(tunnel_type).map_err(|e| WgntError::Config(e.to_string()))?;
+                U16CString::from_str(tunnel_type).map_err(|e| WgntError::Config(e.to_string()))?;
             let handle = unsafe {
                 (self.create_adapter)(name.as_ptr(), tunnel_type.as_ptr(), std::ptr::null())
             };
@@ -167,7 +169,7 @@ mod imp {
         }
 
         pub fn open_adapter(&self, name: &str) -> WgntResult<WIREGUARD_ADAPTER_HANDLE> {
-            let name = U16CStr::from_str(name).map_err(|e| WgntError::Config(e.to_string()))?;
+            let name = U16CString::from_str(name).map_err(|e| WgntError::Config(e.to_string()))?;
             let handle = unsafe { (self.open_adapter)(name.as_ptr()) };
             if handle.is_null() {
                 Err(WgntError::last_error("WireGuardOpenAdapter"))
@@ -185,7 +187,7 @@ mod imp {
         pub fn get_adapter_luid(&self, handle: WIREGUARD_ADAPTER_HANDLE) -> WgntResult<u64> {
             let mut luid = windows_sys::Win32::NetworkManagement::Ndis::NET_LUID_LH { Value: 0 };
             unsafe { (self.get_adapter_luid)(handle, &mut luid) };
-            Ok(luid.Value)
+            Ok(unsafe { luid.Value })
         }
 
         pub fn set_configuration(

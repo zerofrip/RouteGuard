@@ -122,7 +122,7 @@ pub fn serialize_interface(conf: &ParsedConf) -> WgntResult<Vec<u8>> {
     let peer_blocks: Vec<(WIREGUARD_PEER, Vec<WIREGUARD_ALLOWED_IP>)> = conf
         .peers
         .iter()
-        .map(|p| peer_to_native(p))
+        .map(peer_to_native)
         .collect::<WgntResult<Vec<_>>>()?;
 
     let total_allowed: usize = peer_blocks.iter().map(|(_, a)| a.len()).sum();
@@ -150,14 +150,14 @@ pub fn serialize_interface(conf: &ParsedConf) -> WgntResult<Vec<u8>> {
 
         let mut offset = std::mem::size_of::<WIREGUARD_INTERFACE>();
         for (peer, allowed) in peer_blocks {
-            std::ptr::copy_nonoverlap(
+            std::ptr::copy_nonoverlapping(
                 &peer as *const WIREGUARD_PEER,
                 buf.as_mut_ptr().add(offset) as *mut WIREGUARD_PEER,
                 1,
             );
             offset += std::mem::size_of::<WIREGUARD_PEER>();
             for aip in allowed {
-                std::ptr::copy_nonoverlap(
+                std::ptr::copy_nonoverlapping(
                     &aip as *const WIREGUARD_ALLOWED_IP,
                     buf.as_mut_ptr().add(offset) as *mut WIREGUARD_ALLOWED_IP,
                     1,
@@ -220,18 +220,14 @@ fn ipnet_to_allowed_ip(net: &IpNet) -> WgntResult<WIREGUARD_ALLOWED_IP> {
             let mut addr = WIREGUARD_ALLOWED_IP_ADDRESS {
                 V4: unsafe { std::mem::zeroed() },
             };
-            unsafe {
-                addr.V4.s_addr = u32::from(*v4.addr()).to_be();
-            }
+            addr.V4.s_addr = u32::from(v4.addr()).to_be();
             (AF_INET, addr)
         }
         IpNet::V6(v6) => {
             let mut addr = WIREGUARD_ALLOWED_IP_ADDRESS {
                 V6: unsafe { std::mem::zeroed() },
             };
-            unsafe {
-                addr.V6.u.Byte = v6.addr().octets();
-            }
+            addr.V6.u.Byte = v6.addr().octets();
             (AF_INET6, addr)
         }
     };

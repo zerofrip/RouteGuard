@@ -38,9 +38,13 @@ fn skip_if_not_enabled() {
 #[ignore]
 fn test_dll_load_missing() {
     skip_if_not_enabled();
-    let err = WgntLibrary::load("nonexistent-wireguard.dll").unwrap_err();
-    let msg = err.to_string();
-    assert!(msg.contains("not found") || msg.contains("DllNotFound"));
+    match WgntLibrary::load("nonexistent-wireguard.dll") {
+        Err(e) => {
+            let msg = e.to_string();
+            assert!(msg.contains("not found") || msg.contains("DllNotFound"));
+        }
+        Ok(_) => panic!("expected load failure for missing dll"),
+    }
 }
 
 #[test]
