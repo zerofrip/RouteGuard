@@ -139,7 +139,7 @@ pub fn serialize_interface(conf: &ParsedConf) -> WgntResult<Vec<u8>> {
         flags |= WIREGUARD_INTERFACE_HAS_LISTEN_PORT;
     }
 
-    let mut iface = WIREGUARD_INTERFACE {
+    let iface = WIREGUARD_INTERFACE {
         Flags: flags,
         ListenPort: conf.listen_port.unwrap_or(0),
         _padding: 0,
